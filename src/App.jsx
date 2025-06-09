@@ -1,9 +1,9 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Layout from './components/layout/Layout';
-import Login from './components/Login'
+import Layout from './public/components/layout/Layout';
+import Login from './public/components/Login'
 import { ThemeProvider } from './context/ThemeContext';
-import Register from './components/Register';
+import Register from './public/components/Register';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 function App() {

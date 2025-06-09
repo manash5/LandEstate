@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = (props) => {

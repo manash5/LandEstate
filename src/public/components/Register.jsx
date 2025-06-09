@@ -1,10 +1,11 @@
 import React, {useState, useEffect} from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Navbar from './layout/Navbar';
-import metaLogo from '../assets/meta.png'
+import metaLogo from '../../assets/meta.png'
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
-import FacebookLogin from 'react-facebook-login';
+// import FacebookLogin from 'react-facebook-login';
+import { useForm } from 'react-hook-form';
 
 
 const Register = () => {
@@ -44,24 +45,7 @@ const Register = () => {
   
       
   
-      useEffect(() => {
-          // Initialize Facebook SDK
-          if (window.FB) {
-              window.FB.init({
-                  appId: import.meta.env.VITE_FACEBOOK_CLIENT_ID,
-                  cookie: true,
-                  xfbml: true,
-                  version: 'v18.0',
-              });
-          }
-  
-          // Simulate loading
-          const timer = setTimeout(() => {
-              setIsLoading(false);
-          }, 2000);
-  
-          return () => clearTimeout(timer);
-      }, []);
+      
   
       useEffect(() => {
           // Add loading when route changes
@@ -101,17 +85,7 @@ const Register = () => {
   
     
   
-    const componentClicked = () => {
-      console.log("Facebook button clicked");
-    };
-  
-    const handleFacebookCallback = (response) => {
-      if (response?.status === "unknown") {
-          console.error('Sorry!', 'Something went wrong with facebook Login.');
-       return;
-      }
-      console.log(response);
-    }
+   
 
   const handleSocialLogin = (provider) => {
     toast.info(`${provider} login clicked!`, {
@@ -125,6 +99,12 @@ const Register = () => {
       theme: "dark",
       transition: Bounce,
     });
+  };
+
+  const { register, handleSubmit, formState: { errors } } = useForm(); 
+ 
+  const onSubmit = (data) => { 
+    console.log(data); 
   };
   return (
     <>
@@ -154,65 +134,66 @@ const Register = () => {
                  <span className='text-blue-500'> Terms and Conditions  </span></h5>
           </div>
           
-
+          <form onSubmit = {handleSubmit(onSubmit)} className="space-y-6">
           {/* Login Form */}
-          <div className="space-y-6">
-            {/* Email Input */}
-            <div className="relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email address"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
-              />
-            </div>
+            <div className="space-y-6">
+              {/* Email Input */}
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter email address"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
+                />
+              </div>
 
-            {/* username input  */}
-            <div className="relative">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
-              />
-            </div>
+              {/* username input  */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your username"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
+                />
+              </div>
 
-            {/* Password Input */}
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
-              />
+              {/* Password Input */}
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+
+              {/* Login Button */}
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                onClick={handleRegister}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                    Logging in...
+                  </div>
+                ) : (
+                  'Register'
+                )}
               </button>
             </div>
-
-            {/* Login Button */}
-            <button
-              onClick={handleRegister}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                  Logging in...
-                </div>
-              ) : (
-                'Register'
-              )}
-            </button>
-          </div>
+          </form>
 
           {/* Divider */}
           <div className="my-8">
@@ -259,7 +240,7 @@ const Register = () => {
             </div>
 
             <div className="relative w-full">
-              <FacebookLogin
+              {/* <FacebookLogin
                 appId={import.meta.env.VITE_FACEBOOK_CLIENT_ID}
                 autoLoad={false}
                 fields="name,email,picture"
@@ -270,7 +251,7 @@ const Register = () => {
                   <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>}
                 textButton="Continue with Meta"
-              />
+              /> */}
             </div>
           </div>
 
