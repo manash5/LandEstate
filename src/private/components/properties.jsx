@@ -241,6 +241,130 @@ const PropertyApp = () => {
     </div>
   );
 
+  const PropertyDetails = ({ property }) => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={handleBackToList}
+          className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Details
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Image Gallery */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 md:col-span-1">
+              <img
+                src={property.images[0]}
+                alt={property.title}
+                className="w-full h-80 object-cover rounded-2xl"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4">
+              <img
+                src={property.images[1]}
+                alt=""
+                className="w-full h-36 object-cover rounded-2xl"
+              />
+              <div className="relative">
+                <img
+                  src={property.images[2]}
+                  alt=""
+                  className="w-full h-36 object-cover rounded-2xl"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
+                  <span className="text-white font-semibold">+10</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Property Info */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="mb-4">
+              <span className="text-gray-500 text-sm">{property.type}</span>
+              <h1 className="text-2xl font-bold text-gray-800 mt-1">{property.title}</h1>
+              <div className="flex items-center text-gray-500 mt-2">
+                <MapPin className="w-4 h-4 mr-1" />
+                <span>{property.location}</span>
+              </div>
+            </div>
+
+            {/* Rating */}
+            <div className="flex items-center mb-6">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-5 h-5 ${i < property.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                />
+              ))}
+            </div>
+
+            {/* Price */}
+            <div className="mb-6">
+              <span className="text-gray-500">Price</span>
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold text-blue-600">{property.price}</span>
+                <span className="text-gray-500 ml-2">For One Day</span>
+              </div>
+            </div>
+
+            {/* Facilities */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Facility</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="flex items-center">
+                  <Bed className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">{property.beds} Beds</span>
+                </div>
+                <div className="flex items-center">
+                  <Bath className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">{property.baths} Baths</span>
+                </div>
+                <div className="flex items-center">
+                  <Square className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">{property.area} Area</span>
+                </div>
+                <div className="flex items-center">
+                  <Utensils className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">Kitchen</span>
+                </div>
+                <div className="flex items-center">
+                  <Building className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">Balcony</span>
+                </div>
+                <div className="flex items-center">
+                  <Wifi className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">Wifi</span>
+                </div>
+                <div className="flex items-center">
+                  <Wind className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">Smoking Area</span>
+                </div>
+                <div className="flex items-center">
+                  <Car className="w-5 h-5 text-gray-500 mr-2" />
+                  <span className="text-gray-600">Parking Area</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Description</h3>
+              <p className="text-gray-600 leading-relaxed">{property.description}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   
 
   return (
