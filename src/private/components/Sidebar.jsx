@@ -2,13 +2,14 @@
 import React, { useState } from 'react'
 import { 
   LayoutDashboard, 
-  Package, 
+  Building, 
   ShoppingCart, 
   User, 
   Settings, 
-  Receipt, 
-  Calendar,
+  Receipt,
   ChevronLeft,
+  PartyPopper, 
+  MessageSquare
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -19,12 +20,12 @@ const Sidebar = () => {
 
   const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Package, label: 'Inventory', path: '/inventory' },
-    { icon: ShoppingCart, label: 'Products', path: '/products' },
-    { icon: User, label: 'User', path: '/user' },
+    { icon: Building, label: 'Properties', path: '/properties' },
+    { icon: ShoppingCart, label: 'MyListing', path: '/mylisting' },
+    { icon: PartyPopper, label: 'PropAI', path: '/propai' },
+    { icon: User, label: 'Profile', path: '/profile' },
+    { icon: MessageSquare, label: 'Message', path: '/message' },
     { icon: Settings, label: 'Settings', path: '/settings' },
-    { icon: Receipt, label: 'Expenses', path: '/expenses' },
-    { icon: Calendar, label: 'Calendar', path: '/calendar' },
   ];
 
   // Get the active item based on current pathname
@@ -48,8 +49,8 @@ const Sidebar = () => {
       }`}>
       {/* Header with Logo and Toggle Button */}
       <div className="flex items-center justify-between my-10 px-5">
-        <div className="logo flex items-center space-x-2">
-          {isCollapsed? <h1 className="text-sm font-bold text-primary-500 opacity-0 display-none">LandEstate</h1> :<h1 className="text-xl  text-white font-bold text-primary-500">LandEstate</h1>}
+        <div className="logo flex items-center space-x-2 px-2">
+          {isCollapsed? <img src = './src/assets/house.png'></img>:<><img src = './src/assets/house.png'></img><h1 className="text-xl  text-white font-bold text-primary-500 px-2">LandEstate</h1></>}
           
         </div>
         
