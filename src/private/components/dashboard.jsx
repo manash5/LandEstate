@@ -4,6 +4,11 @@ import Sidebar from './sidebar';
 
 const dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const handleSidebarToggle = (collapsed) => {
+    setIsSidebarCollapsed(collapsed);
+  };
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -65,11 +70,11 @@ const dashboard = () => {
     <div className="min-h-screen bg-slate-100 flex">
       {/* Sidebar */}
       <div className="fixed left-0 top-0 h-screen">
-        <Sidebar/>
+        <Sidebar onToggle={handleSidebarToggle}/>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 ml-[280px]"> {/* Add margin-left equal to sidebar width */}
+      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-[80px]' : 'ml-[280px]'}`}>
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 my-6 mx-3 ">
           <div className="flex items-center justify-between px-5">
