@@ -2,16 +2,16 @@ import React, {useState, useEffect} from 'react';
 import {useForm}  from 'react-hook-form';
 import { Eye, EyeOff } from 'lucide-react';
 import Navbar from '../components/layout/Navbar'
-import { useLocation } from 'react-router-dom';
 import Loader from '../components/ui/Loader'; 
 import metaLogo from '../../assets/meta.png'
 import { GoogleLogin } from '@react-oauth/google';
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 // import FacebookLogin from 'react-facebook-login';
-
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Login = () => {
-    const location = useLocation();
+      const location = useLocation();
+      const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -242,7 +242,7 @@ const Login = () => {
                     <div className="mt-8 text-center">
                         <span className="text-gray-600">Don't have an account? </span>
                         <button
-                            onClick={() => alert('Register clicked!')}
+                            onClick={() => navigate('/register')}
                             className="text-green-600 hover:text-green-700 font-semibold transition-colors duration-200 hover:underline"
                         >
                             Register

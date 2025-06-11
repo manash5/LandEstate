@@ -6,33 +6,38 @@ import { ToastContainer, toast, Bounce } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
 // import FacebookLogin from 'react-facebook-login';
 import { useForm } from 'react-hook-form';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 
 const Register = () => {
-    const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { register, handleSubmit, formState: { errors } } = useForm(); 
 
-  const handleRegister  = () => {
-    setIsLoading(true);
-    // Simulate registration process
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success('Registration successful!', {
-        position: "bottom-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
-        transition: Bounce,
-      });
-    }, 1500);
-  };
+  const handleRegister = (data) => {
+      setIsLoading(true);
+      console.log(data); 
+      localStorage.setItem('user', JSON.stringify(data));
+      navigate('/login');
+      
+      // Simulate registration process
+      setTimeout(() => {
+        setIsLoading(false);
+        toast.success('Registration successful!', {
+          position: "bottom-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+          transition: Bounce,
+        });
+      }, 1500);
+    };
 
   const handleLogin = () => {
       setIsLoading(true);
@@ -101,7 +106,7 @@ const Register = () => {
     });
   };
 
-  const { register, handleSubmit, formState: { errors } } = useForm(); 
+
  
   const onSubmit = (data) => { 
     console.log(data); 
@@ -134,37 +139,40 @@ const Register = () => {
                  <span className='text-blue-500'> Terms and Conditions  </span></h5>
           </div>
           
-          <form onSubmit = {handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit = {handleSubmit(handleRegister)} className="space-y-6">
           {/* Login Form */}
             <div className="space-y-6">
               {/* Email Input */}
               <div className="relative">
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("email", { required: "Email is required" })}
                   placeholder="Enter email address"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
                 />
+                {errors.email && (
+    <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+  )}
               </div>
 
               {/* username input  */}
               <div className="relative">
                 <input
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  {...register("username", { required: "Username is required" })}
                   placeholder="Enter your username"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
                 />
+                {errors.username && (
+    <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>
+  )}
               </div>
 
               {/* Password Input */}
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password", { required: "Password is required", minLength: { value: 6, message: "Password must be at least 6 characters" } })}
                   placeholder="Enter password"
                   className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
                 />
@@ -175,11 +183,14 @@ const Register = () => {
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
+                {errors.password && (
+    <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+  )}
               </div>
 
               {/* Login Button */}
               <button
-                onClick={handleRegister}
+                type = 'submit'
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
               >

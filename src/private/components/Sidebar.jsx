@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+
+import React, { useState } from 'react'
 import { 
   LayoutDashboard, 
   Building, 
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const Sidebar = ({ onToggle }) => {
+const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -39,9 +40,6 @@ const Sidebar = ({ onToggle }) => {
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
-    if (onToggle) {
-      onToggle(!isCollapsed);
-    }
   };
 
   return (
