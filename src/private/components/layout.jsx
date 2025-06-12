@@ -20,6 +20,7 @@ import {
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [currentComponent, setCurrentComponent] = useState(<Dashboard />);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     switch (activeTab) {
@@ -89,15 +90,25 @@ const Layout = () => {
     setActiveTab(newTab);
   };
 
+  const handleSidebarCollapse = (isCollapsed) => {
+    setIsSidebarCollapsed(isCollapsed);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 flex">
       {/* Fixed Sidebar Container */}
       <div className="fixed left-0 top-0 h-screen">
-        <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
+        <Sidebar 
+          activeTab={activeTab} 
+          onTabChange={handleTabChange}
+          onCollapse={handleSidebarCollapse}
+        />
       </div>
 
-      {/* Main Content with margin to account for fixed sidebar */}
-      <div className="flex-1 ml-[296px] transition-all duration-300 overflow-y-auto">
+      {/* Main Content with dynamic margin based on sidebar state */}
+      <div className={`flex-1 transition-all duration-300 overflow-y-auto ${
+        isSidebarCollapsed ? 'ml-[96px]' : 'ml-[296px]'
+      }`}>
         {currentComponent}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   LayoutDashboard, 
   Building, 
@@ -11,7 +11,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 
-const Sidebar = ({ activeTab, onTabChange }) => {
+const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const sidebarItems = [
@@ -31,7 +31,11 @@ const Sidebar = ({ activeTab, onTabChange }) => {
   };
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    const newCollapsedState = !isCollapsed;
+    setIsCollapsed(newCollapsedState);
+    if (onCollapse) {
+      onCollapse(newCollapsedState);
+    }
   };
 
   return (
