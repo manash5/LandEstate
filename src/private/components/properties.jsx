@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import Sidebar from './sidebar';
 import { Home, Building, Users, Star, Settings, Bell, Search, MapPin, Bed, Bath, Square, Wifi, Car, Utensils, Wind, Phone, MessageCircle, ArrowLeft, ChevronDown, Filter, Plus } from 'lucide-react';
 
-const PropertyApp = () => {
+const Properties = () => {
   const [currentView, setCurrentView] = useState('list'); // 'list' or 'details'
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [activeTab, setActiveTab] = useState('property');
@@ -369,12 +368,9 @@ const PropertyApp = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
-      <div className="fixed left-0 top-0 h-screen">
-        <Sidebar onToggle={handleSidebarToggle}/>
-      </div>
 
       {/* Main Content */}
-      <div className={`flex-1 overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? 'ml-[80px]' : 'ml-[280px]'} my-10 bg-slate-100`}>
+      <div className={`flex-1 overflow-hidden transition-all duration-300 my-10 bg-slate-100`}>
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 rounded-xl mx-10">
           <div className="flex items-center justify-between">
@@ -464,4 +460,4 @@ const PropertyApp = () => {
   );
 };
 
-export default PropertyApp;
+export default Properties;

@@ -5,8 +5,11 @@ import Login from './public/components/Login'
 import { ThemeProvider } from './context/ThemeContext';
 import Register from './public/components/Register';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import Dashboard from './private/components/dashboard';
+import Dashboard from './private/components/Dashboard';
 import Properties from './private/components/properties';
+import Table from './private/components/table';
+import Layout1 from './private/components/Layout';
+import Profile from './private/components/profile';
 
 function App() {
 
@@ -19,6 +22,9 @@ function App() {
         <Route path ='/register' element={<Register/>}/>
         <Route path ='/dashboard' element={<Dashboard/>}/>
         <Route path = '/properties' element = {<Properties/>}/>
+        <Route path = '/table' element = {<Table/>}/>
+        <Route path = '/layout' element = {<Layout1/>}/>
+        <Route path = '/profile' element = {<Profile/>}/>
 
 
         
