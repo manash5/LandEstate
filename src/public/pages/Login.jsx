@@ -3,7 +3,6 @@ import {useForm}  from 'react-hook-form';
 import { Eye, EyeOff } from 'lucide-react';
 import Navbar from '../components/layout/Navbar'
 import Loader from '../components/ui/Loader'; 
-import metaLogo from '../../assets/meta.png'
 import { GoogleLogin } from '@react-oauth/google';
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 // import FacebookLogin from 'react-facebook-login';

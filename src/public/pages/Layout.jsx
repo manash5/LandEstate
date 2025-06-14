@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Navbar from './Navbar';
-import Footer from './Footer';
-import Loader from '../ui/Loader';
-import ScrollToTop from '../ui/ScrollToTop';
-import Hero from '../home/Hero'
-import Features from '../home/Features';
-import PropertyShowcase from '../home/PropertyShowcase';
-import Testimonials from '../home/Testimonials'; 
-import UserRoles from '../home/UserRoles';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
+import Loader from '../components/ui/Loader';
+import ScrollToTop from '../components/ui/ScrollToTop';
+import Hero from '../components/home/Hero'
+import Features from '../components/home/Features';
+import PropertyShowcase from '../components/home/PropertyShowcase';
+import Testimonials from '../components/home/Testimonials'; 
+import UserRoles from '../components/home/UserRoles';
 
 const Layout = () => {
   const [isLoading, setIsLoading] = useState(true);

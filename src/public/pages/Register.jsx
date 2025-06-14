@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import Navbar from './layout/Navbar';
-import metaLogo from '../../assets/meta.png'
+import Navbar from '../components/layout/Navbar';
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
 // import FacebookLogin from 'react-facebook-login';
