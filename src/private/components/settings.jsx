@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from 'react';
 import { 
   User, 
@@ -11,7 +13,8 @@ import {
   Eye, 
   EyeOff, 
   Save, 
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 
 const settings = () => {
@@ -65,6 +68,14 @@ const settings = () => {
   const handleSave = () => {
     console.log('Saving settings:', formData);
     alert('Settings saved successfully!');
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      console.log('Logging out...');
+      alert('Logged out successfully!');
+      // Logout logic 
+    }
   };
 
   const ToggleSwitch = ({ checked, onChange }) => (
@@ -411,15 +422,36 @@ const settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 ">
+    <div className="min-h-screen bg-slate-100">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-900 flex items-center gap-3">
-            <Settings className="w-8 h-8" />
-            Landestate Settings
-          </h1>
-          <p className="text-blue-700 mt-2">Manage your account and property preferences</p>
+        <div className="mb-8 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg mb-5">
+                  <Settings className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 bg-clip-text text-transparent">
+                    Landestate Settings
+                  </h1>
+                  <p className="text-gray-600 mt-1 text-lg font-medium">
+                    Manage your account and property preferences
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
