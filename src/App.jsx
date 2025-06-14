@@ -9,7 +9,8 @@ import Dashboard from './private/components/Dashboard';
 import Properties from './private/components/properties';
 import Table from './private/components/table';
 import Layout1 from './private/components/Layout';
-import Profile from './private/components/profile';
+import Profile from './private/components/Profile';
+import Settings from './private/components/settings';
 
 function App() {
 
@@ -25,6 +26,7 @@ function App() {
         <Route path = '/table' element = {<Table/>}/>
         <Route path = '/layout' element = {<Layout1/>}/>
         <Route path = '/profile' element = {<Profile/>}/>
+        <Route path = '/settings' element = {<Settings/>}/>
 
 
         

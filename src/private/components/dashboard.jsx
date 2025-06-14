@@ -68,15 +68,10 @@ const dashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
-      {/* Sidebar */}
-      {/* <div className="fixed left-0 top-0 h-screen">
-        <Sidebar onToggle={handleSidebarToggle}/>
-      </div> */}
-
       {/* Main Content */}
       <div className={`flex-1 transition-all duration-300`}>
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 my-6 mx-3 ">
+        <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 my-6 mx-8 rounded-xl ">
           <div className="flex items-center justify-between px-5">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">Welcome</h1>
