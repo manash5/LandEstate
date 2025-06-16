@@ -1,6 +1,6 @@
 import React from 'react';
-import PropertyCard from '../components/PropertyCard';
-import StatsCard from '../components/StatsCard';
+import PropertyCard from './propertyCard';
+import StatsCard from './StatsCard';
 import { properties, issues } from '../data/mockData';
 import { Building, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 
