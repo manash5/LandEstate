@@ -3,6 +3,7 @@ import Dashboard from '../components/dashboard';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import MyProperties from '../components/MyProperties';
+import ServiceRecords from '../components/ServiceRecords';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -15,10 +16,10 @@ const Layout = () => {
     switch (tab) {
       case 'Dashboard':
         return <Dashboard />;
-      case 'MyAssignedProperties':
+      case 'Assigned Properties':
         return <MyProperties />;
-      case 'Analyze':
-        return <Analyze />;
+      case 'Service Records':
+        return <ServiceRecords />;
       case 'Profile':
         return <Profile />;
       case 'PropAI':
