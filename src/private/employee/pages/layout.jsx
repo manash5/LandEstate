@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import MyProperties from '../components/MyProperties';
 import ServiceRecords from '../components/ServiceRecords';
 import Issues from '../components/Issues';
+import TenantsOverview from '../components/TenantsOverview';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -23,22 +24,8 @@ const Layout = () => {
         return <ServiceRecords />;
       case 'Issues Raised':
         return <Issues />;
-      case 'PropAI':
-        return (
-          <div className="flex-1 overflow-hidden transition-all duration-300 my-10 bg-slate-100">
-            <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 my-6 mx-3">
-              <h1 className="text-3xl font-bold text-gray-800">PropAI</h1>
-            </header>
-            <div className="px-8 py-4">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">PropAI Features</h2>
-                <p className="text-gray-600">AI-powered property features will appear here.</p>
-              </div>
-            </div>
-          </div>
-        );
-      case 'Message':
-        return <Message />;
+      case 'Tenants Overview':
+        return <TenantsOverview />;
       case 'Settings':
         return <Setting />;
       default:

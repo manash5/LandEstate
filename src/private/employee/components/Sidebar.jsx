@@ -19,7 +19,6 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
     { icon: Clipboard, label: 'Service Records' },
     { icon: MessageSquare, label: 'Issues Raised' },
     { icon: Users, label: 'Tenants Overview' },
-    { icon: MessageSquare, label: 'Documents' },
     { icon: Settings, label: 'Settings' },
   ];
 
