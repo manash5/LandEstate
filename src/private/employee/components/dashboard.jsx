@@ -1,7 +1,7 @@
 import React from 'react';
 import PropertyCard from './propertyCard';
 import StatsCard from './StatsCard';
-import { properties, issues } from '../data/mockData';
+import { properties, issues } from '../data/mockdata';
 import { Building, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const Dashboard = ({ setSelectedRoom }) => {
@@ -42,11 +42,21 @@ const Dashboard = ({ setSelectedRoom }) => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Dashboard Overview</h1>
-        <p className="text-gray-600">Welcome to your property management dashboard</p>
-      </div>
+    <div className="space-y-6 p-4">
+    <div className="bg-slate-100 p-6 rounded-xl relative overflow-hidden">
+  {/* Content */}
+  <div className="relative z-10">
+    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-700 bg-clip-text text-transparent mb-1">
+      Dashboard Overview
+    </h1>
+    <p className="text-gray-600 text-lg font-medium">
+      Welcome to your property management dashboard
+    </p>
+    
+    {/* Optional accent line */}
+    <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mt-2"></div>
+  </div>
+</div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (

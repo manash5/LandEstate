@@ -13,7 +13,7 @@ import Profile from '../../private/components/Profile';
 import Settings from '../../private/components/settings';
 import Test from '../components/test';
 import NavigateClick from '../components/AnalyzeClick';
-import EmployeeDashboard from '../employee/components/dashboard'
+import EmployeeLayout from '../employee/pages/layout'
 
 const AppRoutes = () => {
   return (
@@ -31,7 +31,7 @@ const AppRoutes = () => {
         <Route path = '/settings' element = {<Settings/>}/>
         <Route path = '/Test' element = {<Test/>}/>
         <Route path="/property/:id" element={<NavigateClick />} />
-        <Route path = 'employee/dashboard' element = {<EmployeeDashboard/>} />
+        <Route path = 'employee/layout' element = {<EmployeeLayout/>} />
 
 
         
