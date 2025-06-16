@@ -8,7 +8,8 @@ import {
   Receipt,
   ChevronLeft,
   PartyPopper, 
-  MessageSquare
+  MessageSquare, 
+  ScanSearch
 } from 'lucide-react';
 
 const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
@@ -17,7 +18,7 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
   const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
     { icon: Building, label: 'Properties' },
-    { icon: ShoppingCart, label: 'MyListing' },
+    { icon: ScanSearch, label: 'Analyze' },
     { icon: PartyPopper, label: 'PropAI' },
     { icon: User, label: 'Profile' },
     { icon: MessageSquare, label: 'Message' },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Building, Users, Star, Settings, Bell, Search, TrendingUp, TrendingDown, Eye, Heart } from 'lucide-react';
+import { Home, Building, Users, Star, Settings, Bell, Search, TrendingUp, TrendingDown, Eye, Heart, FileSpreadsheet } from 'lucide-react';
 import Sidebar from './sidebar';
 
 const dashboard = () => {
@@ -13,7 +13,7 @@ const dashboard = () => {
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'properties', label: 'Properties', icon: Building },
-    { id: 'mylisting', label: 'My Listing', icon: Star },
+    { id: 'mylisting', label: 'My Listing', icon: FileSpreadsheet },
     { id: 'rental', label: 'Rental Mng', icon: Building },
     { id: 'profile', label: 'Profile', icon: Users },
     { id: 'msg', label: 'Msg', icon: Users },

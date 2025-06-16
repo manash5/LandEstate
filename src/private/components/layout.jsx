@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import Dashboard from './Dashboard';
+import Dashboard from './dashboard';
 import Properties from './properties';
 import MyListing from './MyListing';
 import Profile from './Profile';
 import Sidebar from './sidebar';
 import Message from './message';
 import Setting from './settings';
+import Analyze from './Analyze';
+import { useLocation } from 'react-router-dom';
 
 import { 
   LayoutDashboard, 
@@ -23,23 +25,21 @@ const Layout = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [currentComponent, setCurrentComponent] = useState(<Dashboard />);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const location = useLocation();
 
-  useEffect(() => {
-    switch (activeTab) {
+  // Function to render component based on active tab
+  const renderComponent = (tab) => {
+    switch (tab) {
       case 'Dashboard':
-        setCurrentComponent(<Dashboard />);
-        break;
+        return <Dashboard />;
       case 'Properties':
-        setCurrentComponent(<Properties />);
-        break;
-      case 'MyListing':
-        setCurrentComponent(<MyListing />);
-        break;
+        return <Properties />;
+      case 'Analyze':
+        return <Analyze />;
       case 'Profile':
-        setCurrentComponent(<Profile />);
-        break;
+        return <Profile />;
       case 'PropAI':
-        setCurrentComponent(
+        return (
           <div className="flex-1 overflow-hidden transition-all duration-300 my-10 bg-slate-100">
             <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 my-6 mx-3">
               <h1 className="text-3xl font-bold text-gray-800">PropAI</h1>
@@ -52,20 +52,26 @@ const Layout = () => {
             </div>
           </div>
         );
-        break;
       case 'Message':
-        setCurrentComponent(
-          <Message />
-        );
-        break;
+        return <Message />;
       case 'Settings':
-        setCurrentComponent(
-          <Setting />
-        );
-        break;
+        return <Setting />;
       default:
-        setCurrentComponent(<Dashboard />);
+        return <Dashboard />;
     }
+  };
+
+  // Handle initial state from navigation
+  useEffect(() => {
+    if (location.state?.showAnalyze) {
+      setActiveTab('Analyze');
+      setCurrentComponent(renderComponent('Analyze'));
+    }
+  }, [location.state]);
+
+  // Handle tab changes
+  useEffect(() => {
+    setCurrentComponent(renderComponent(activeTab));
   }, [activeTab]);
 
   const handleTabChange = (newTab) => {
