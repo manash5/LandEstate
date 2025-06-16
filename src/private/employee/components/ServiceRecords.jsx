@@ -299,51 +299,28 @@ const ServiceRecords = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-              Service Records
-            </h1>
-            <p className="text-gray-600 mt-2">Track and manage all maintenance activities</p>
-          </div>
-          <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
+        <div className="bg-slate-100 p-6 rounded-xl relative overflow-hidden">
+        {/* Content */}
+        <div className="relative z-10 ">
+          <div className="flex items-center justify-between ">
+            <div className="">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-700 bg-clip-text text-transparent mb-1">
+                Service Records
+              </h1>
+              <p className="text-gray-600 text-lg font-medium">
+                Track and manage all maintenance activities
+              </p>
+            </div>
             <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105">
               <Plus className="w-4 h-4" />
               Add Service
             </button>
           </div>
+          {/* Optional accent line */}
+          <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mt-2 "></div>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatusCard
-            title="Completed"
-            count={completedCount}
-            color="text-emerald-600"
-            bgColor="bg-emerald-50"
-            percentage={`${Math.round((completedCount / records.length) * 100)}%`}
-          />
-          <StatusCard
-            title="In Progress"
-            count={inProgressCount}
-            color="text-amber-600"
-            bgColor="bg-amber-50"
-            percentage={`${Math.round((inProgressCount / records.length) * 100)}%`}
-          />
-          <StatusCard
-            title="Pending"
-            count={pendingCount}
-            color="text-rose-600"
-            bgColor="bg-rose-50"
-            percentage={`${Math.round((pendingCount / records.length) * 100)}%`}
-          />
-        </div>
+      </div>
+      <div className="max-w-7xl mx-auto space-y-8 my-5">
 
         {/* Filters and Search */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

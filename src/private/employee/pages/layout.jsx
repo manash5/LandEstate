@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import MyProperties from '../components/MyProperties';
 import ServiceRecords from '../components/ServiceRecords';
+import Issues from '../components/Issues';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -20,8 +21,8 @@ const Layout = () => {
         return <MyProperties />;
       case 'Service Records':
         return <ServiceRecords />;
-      case 'Profile':
-        return <Profile />;
+      case 'Issues Raised':
+        return <Issues />;
       case 'PropAI':
         return (
           <div className="flex-1 overflow-hidden transition-all duration-300 my-10 bg-slate-100">
