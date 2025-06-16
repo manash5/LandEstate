@@ -2,18 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Dashboard from '../components/dashboard';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-
-import { 
-  LayoutDashboard, 
-  Building, 
-  ShoppingCart, 
-  User, 
-  Settings, 
-  Receipt,
-  ChevronLeft,
-  PartyPopper, 
-  MessageSquare
-} from 'lucide-react';
+import MyProperties from '../components/MyProperties';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -26,8 +15,8 @@ const Layout = () => {
     switch (tab) {
       case 'Dashboard':
         return <Dashboard />;
-      case 'Properties':
-        return <Properties />;
+      case 'MyAssignedProperties':
+        return <MyProperties />;
       case 'Analyze':
         return <Analyze />;
       case 'Profile':
