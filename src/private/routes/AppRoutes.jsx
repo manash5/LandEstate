@@ -8,7 +8,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import Dashboard from '../../private/components/dashboard';
 import Properties from '../../private/components/properties';
 import Table from '../../private/components/table';
-import Layout1 from '../../private/components/layout';
+import Layout1 from '../../private/pages/layout';
 import Profile from '../../private/components/Profile';
 import Settings from '../../private/components/settings';
 import Test from '../components/test';

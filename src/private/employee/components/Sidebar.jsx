@@ -44,7 +44,7 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
         {/* Header with Logo and Toggle Button */}
         <div className="flex items-center justify-between my-10 px-5">
           <div className="logo flex items-center space-x-2 px-2">
-            {isCollapsed? <img src = './src/assets/house.png'></img>:<><img src = './src/assets/house.png'></img><h1 className="text-xl  text-white font-bold text-primary-500 px-2">LandEstate</h1></>}
+            {isCollapsed? <img src = './src/assests/house.png'></img>:<><img src = './src/assets/house.png'></img><h1 className="text-xl  text-white font-bold text-primary-500 px-2">LandEstate</h1></>}
           </div>
           
           {!isCollapsed && (

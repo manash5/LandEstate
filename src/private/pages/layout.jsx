@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import Dashboard from './dashboard';
-import Properties from './properties';
-import MyListing from './MyListing';
-import Profile from './Profile';
-import Sidebar from './sidebar';
-import Message from './message';
-import Setting from './settings';
-import Analyze from './Analyze';
+import Dashboard from '../components/dashboard';
+import Properties from '../components/properties';
+import MyListing from '../components/MyListing';
+import Profile from '../components/Profile';
+import Sidebar from '../components/sidebar';
+import Message from '../components/message';
+import Setting from '../components/settings';
+import Analyze from '../components/Analyze';
 import { useLocation } from 'react-router-dom';
 
 import { 

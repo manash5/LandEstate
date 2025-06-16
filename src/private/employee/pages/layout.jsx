@@ -6,6 +6,7 @@ import MyProperties from '../components/MyProperties';
 import ServiceRecords from '../components/ServiceRecords';
 import Issues from '../components/Issues';
 import TenantsOverview from '../components/TenantsOverview';
+import Settings from '../components/Settings';
 
 const Layout = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -27,7 +28,7 @@ const Layout = () => {
       case 'Tenants Overview':
         return <TenantsOverview />;
       case 'Settings':
-        return <Setting />;
+        return <Settings />;
       default:
         return <Dashboard />;
     }
