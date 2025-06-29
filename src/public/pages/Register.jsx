@@ -15,28 +15,48 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm(); 
 
-  const handleRegister = (data) => {
-      setIsLoading(true);
-      console.log(data); 
-      localStorage.setItem('user', JSON.stringify(data));
-      navigate('/login');
-      
-      // Simulate registration process
-      setTimeout(() => {
-        setIsLoading(false);
+  const handleRegister = async (data) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:4000/api/users/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.username, 
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
         toast.success('Registration successful!', {
           position: "bottom-right",
           autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
           theme: "dark",
           transition: Bounce,
         });
-      }, 1500);
-    };
+        navigate('/login');
+      } else {
+        toast.error(result.message || 'Registration failed!', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
+      }
+    } catch (error) {
+      toast.error('Registration failed! Server error.', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = () => {
       setIsLoading(true);

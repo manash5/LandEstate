@@ -19,4 +19,8 @@ export const User=sequelize.define("User",{
       password:{
         type:DataTypes.STRING
       }
+}, {
+    tableName: 'Users',
+    timestamps: true, 
+    underscored: true, 
 })
