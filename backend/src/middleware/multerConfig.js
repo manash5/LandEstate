@@ -24,7 +24,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Initialize Multer
+// Initialize Multern
 const upload = multer({
   storage,
   fileFilter,
