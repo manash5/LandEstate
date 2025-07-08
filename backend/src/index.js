@@ -10,6 +10,7 @@ import { createUploadsFolder } from "./security/helper.js";
 import {propertyRouter} from './route/index.js'; 
 import { registerRouter } from "./route/register/registerRoute.js";
 import cors from 'cors'; 
+import path from 'path'; 
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use("/api/users", userRouter);
 app.use('/api/properties', propertyRouter)
 app.use("/api/auth", authRouter);
 app.use("/api/file", router);
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 createUploadsFolder();
 app.listen(4000, function () {
   console.log("project running in port ");

@@ -51,13 +51,7 @@ const Properties = () => {
       rating: 5,
       facilities: ['Kitchen', 'Balcony', 'Wifi', 'Smoking Area', 'Parking Area'],
       description: 'Beautiful modern apartment with stunning city views. This luxurious property features spacious rooms, contemporary design, and premium amenities. Perfect for those seeking comfort and style in the heart of the city.',
-      agent: {
-        name: 'Hussain Ahmed',
-        role: 'Agent',
-        location: 'North Carolina, USA',
-        properties: 10,
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
-      }
+      
     },
     {
       id: 2,

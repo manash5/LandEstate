@@ -15,14 +15,23 @@ const getAll = async (req, res) => {
 
 /** 
  * Create new property
+ * Expects mainImage and images as URLs (after upload to /api/files)
  */
 const create = async (req, res) => {
     try {
         const body = req.body;
-        
-        // Basic validation
-        if (!body?.name || !body?.location || !body?.price) {
-            return res.status(400).send({ message: "Invalid payload: name, location and price are required" });
+        let images = [];
+
+        // If files are uploaded, use their filenames
+        if (req.files && req.files.length > 0) {
+            images = req.files.map(file => `/uploads/${file.filename}`);
+        } else if (body.images && Array.isArray(body.images)) {
+            // fallback for URLs (optional)
+            images = body.images;
+        }
+
+        if (!body?.name || !body?.location || !body?.price || images.length < 1) {
+            return res.status(400).send({ message: "Invalid payload: name, location, price, and at least one image are required" });
         }
 
         const property = await Property.create({
@@ -30,14 +39,14 @@ const create = async (req, res) => {
             location: body.location,
             price: body.price,
             priceDuration: body.priceDuration || 'One Day',
-            beds: body.beds || 1,
-            baths: body.baths || 1,
-            areaSqm: body.areaSqm || 0,
-            hasKitchen: body.hasKitchen || false,
-            hasBalcony: body.hasBalcony || false,
-            hasWifi: body.hasWifi || false,
-            hasSmokingArea: body.hasSmokingArea || false,
-            hasParking: body.hasParking || false,
+            beds: body.beds ?? 1,
+            baths: body.baths ?? 1,
+            areaSqm: body.areaSqm ?? 0,
+            mainImage: images[0], // first image as main
+            images: images,
+            hasKitchen: body.hasKitchen ?? false,
+            hasBalcony: body.hasBalcony ?? false,
+            hasParking: body.hasParking ?? false,
             description: body.description || ''
         });
 
@@ -65,8 +74,8 @@ const update = async (req, res) => {
         // Update only provided fields
         const updatableFields = [
             'name', 'location', 'price', 'priceDuration', 'beds', 'baths',
-            'areaSqm', 'hasKitchen', 'hasBalcony', 'hasWifi', 
-            'hasSmokingArea', 'hasParking', 'description'
+            'areaSqm', 'mainImage', 'images', 'hasKitchen', 'hasBalcony',
+            'hasParking', 'description'
         ];
 
         updatableFields.forEach(field => {
