@@ -9,7 +9,8 @@ import { ToastContainer, Bounce, toast } from "react-toastify";
 const AddPropertyModal = ({
   isOpen,
   onClose,
-  onAddProperty
+  onAddProperty,
+  onPropertyAdded
 }) => {
   const { register, handleSubmit, reset, setValue, watch } = useForm({
   defaultValues: {
@@ -60,6 +61,10 @@ const [selectedFiles, setSelectedFiles] = React.useState([]);
       const response = await upload(formData); 
       onClose();
       reset();
+      // Call the callback to refresh properties list
+      if (onPropertyAdded) {
+        onPropertyAdded();
+      }
       toast.success('Property sucessfully added', {
         position: "bottom-right",
         autoClose: 5000,

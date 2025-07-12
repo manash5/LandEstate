@@ -31,9 +31,7 @@ const Properties = () => {
   const [filters, setFilters] = useState({
     search: '',
     status: 'Any Status',
-    type: 'Any Type',
-    country: 'All Countries',
-    state: 'All States'
+    type: 'Any Type'
   });
 
   const properties = [
@@ -204,9 +202,7 @@ const Properties = () => {
 
   const filterOptions = {
     status: ['Any Status', 'For Sale', 'For Rent'],
-    type: ['Any Type', 'Apartments', 'Houses', 'Commercial', 'Hotels'],
-    country: ['All Countries', 'USA', 'UK', 'Canada'],
-    state: ['All States', 'North Carolina', 'New York', 'California']
+    type: ['Any Type', 'Apartment', 'Hotel', 'House', 'Commercial']
   };
 
   const handlePropertyClick = (property) => {
@@ -219,34 +215,17 @@ const Properties = () => {
     setSelectedProperty(null);
   };
 
-  const handleAddProperty = () => {
-    const propertyToAdd = {
-      id: properties.length + 1,
-      ...newProperty,
-      rating: 5,
-      agent: {
-        name: 'John Doe',
-        role: 'Agent',
-        location: newProperty.location,
-        properties: 1,
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
-      }
-    };
-    
-    properties.push(propertyToAdd);
-    setIsAddModalOpen(false);
-    setNewProperty({
-      title: '',
-      location: '',
-      price: '',
-      beds: '',
-      baths: '',
-      area: '',
-      type: 'Apartment',
-      description: '',
-      images: [],
-      facilities: []
-    });
+  const handlePropertyAdded = () => {
+    // Refresh the properties list from the database
+    fetchProperties()
+      .then(res => {
+        if (res.data?.data) {
+          setDbProperties(res.data.data);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch properties:', err);
+      });
   };
 
   const PropertyCard = ({ property }) => (
@@ -294,6 +273,12 @@ const Properties = () => {
     </div>
   );
 
+  const getImageUrl = (img) => {
+    if (!img) return 'https://via.placeholder.com/400x300?text=No+Image';
+    if (img.startsWith('http')) return img;
+    return `http://localhost:4000/photos/upload/${img}`;
+  };
+
   const mapDbPropertyToCard = (property) => ({
     id: property.id,
     title: property.name,
@@ -302,8 +287,8 @@ const Properties = () => {
     beds: property.beds,
     baths: property.baths,
     area: property.areaSqm ? `${property.areaSqm}M` : '',
-    image: property.mainImage,
-    images: property.images || [property.mainImage],
+    image: getImageUrl(property.mainImage), // Apply URL transformation here
+    images: (property.images || []).map(getImageUrl),
     type: property.type || 'Apartment',
     rating: 5,
     facilities: [
@@ -313,6 +298,7 @@ const Properties = () => {
       'Wifi'
     ].filter(Boolean),
     description: property.description || '',
+    priceDuration: property.priceDuration, // Add priceDuration for filtering
     agent: {
       name: 'Agent',
       role: 'Agent',
@@ -447,7 +433,46 @@ const Properties = () => {
     </div>
   );
 
-
+  // Filter properties based on search and filters
+  const filteredProperties = () => {
+    let filtered = [...properties, ...dbProperties.map(mapDbPropertyToCard)];
+    
+    // Search filter
+    if (filters.search.trim()) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(property => 
+        property.title.toLowerCase().includes(searchTerm) ||
+        property.location.toLowerCase().includes(searchTerm) ||
+        property.description.toLowerCase().includes(searchTerm) ||
+        property.type.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    // Status filter
+    if (filters.status !== 'Any Status') {
+      filtered = filtered.filter(property => {
+        // For database properties, check priceDuration
+        if (property.priceDuration) {
+          if (filters.status === 'For Sale') {
+            return property.priceDuration === 'one time';
+          } else if (filters.status === 'For Rent') {
+            return property.priceDuration !== 'one time';
+          }
+        }
+        // For static properties, assume they are "For Rent" (you can modify this based on your data)
+        return filters.status === 'For Rent';
+      });
+    }
+    
+    // Type filter
+    if (filters.type !== 'Any Type') {
+      filtered = filtered.filter(property => 
+        property.type.toLowerCase() === filters.type.toLowerCase()
+      );
+    }
+    
+    return filtered;
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
@@ -487,7 +512,7 @@ const Properties = () => {
             <>
               {/* Filters */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="relative">
                     <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
@@ -499,7 +524,7 @@ const Properties = () => {
                     />
                   </div>
                   
-                  {['status', 'type', 'country', 'state'].map((filterType) => (
+                  {['status', 'type'].map((filterType) => (
                     <div key={filterType} className="relative">
                       <select
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
@@ -518,19 +543,14 @@ const Properties = () => {
 
               {/* Property Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {/* Render DB properties first */}
-                {dbProperties.map((property) => (
-                  <PropertyCard key={`db-${property.id}`} property={mapDbPropertyToCard(property)} />
-                ))}
-                {/* Render static properties */}
-                {properties.map((property) => (
+                {filteredProperties().map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
               </div>
 
               {/* Pagination */}
               <div className="flex items-center justify-between">
-                <p className="text-gray-500">Showing 1 to 10 Properties</p>
+                <p className="text-gray-500">Showing 1 to {filteredProperties().length} Properties</p>
                 <div className="flex items-center space-x-2">
                   <button className="px-3 py-2 text-gray-400 hover:text-gray-600">‹</button>
                   <button className="px-3 py-2 bg-blue-600 text-white rounded-lg">1</button>
@@ -551,7 +571,7 @@ const Properties = () => {
         <AddPropertyModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
-          onAddProperty={handleAddProperty}
+          onPropertyAdded={handlePropertyAdded}
         />
       )}
     </div>

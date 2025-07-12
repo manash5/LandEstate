@@ -24,9 +24,9 @@ const create = async (req, res) => {
 
         // If files are uploaded, use their filenames
         if (req.files && req.files.length > 0) {
-            // Use absolute URLs for images
+            // Use the correct URL path for static files
             const baseUrl = `${req.protocol}://${req.get('host')}`;
-            images = req.files.map(file => `${baseUrl}/photos/upload/${file.filename}`);
+            images = req.files.map(file => `${baseUrl}/uploads/${file.filename}`);
         } else if (body.images && Array.isArray(body.images)) {
             // fallback for URLs (optional)
             images = body.images;
@@ -58,7 +58,6 @@ const create = async (req, res) => {
         res.status(500).json({ error: 'Failed to create property' });
     }
 }
-
 /**
  * Update existing property
  */

@@ -18,13 +18,15 @@ const app = express();
 app.use(cors()); 
 const port = process.env.PORT || 5000;
 app.use(bodyParser.json());
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/photos/upload', express.static(path.join(process.cwd(), 'uploads')));
 app.use(authenticateToken);
 app.use("/api/register", registerRouter)
 app.use("/api/users", userRouter);
 app.use('/api/properties', propertyRouter)
 app.use("/api/auth", authRouter);
 app.use("/api/file", router);
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 createUploadsFolder();
 app.listen(4000, function () {
   console.log("project running in port ");

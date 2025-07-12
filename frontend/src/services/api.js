@@ -10,7 +10,14 @@ export const getUsersById = (id) => axios.get(`${API}/${id}`);
 export const createUser = (data) => axios.post(API, data);
 export const updateUser = (id, data) => axios.put(`${API}/${id}`, data);
 export const deleteUser = (id) => axios.delete(`${API}/${id}`);
-export const fetchProperties = () => axios.get('http://localhost:4000/api/properties');
+export const fetchProperties = () => {
+  const token = localStorage.getItem('token');
+  return axios.get(PROP, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
 export const upload = (data) => {
   const token = localStorage.getItem('token'); // or wherever you store your JWT
   return axios.post(PROP, data, {
