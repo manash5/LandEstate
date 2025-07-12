@@ -1,89 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Home, MapPin, Calendar, DollarSign } from 'lucide-react';
 import AnalyzeClick from './AnalyzeClick';
 import { useNavigate } from 'react-router-dom';
+import { fetchProperties } from '../../services/api';
 
 export default function PropertyDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  // Sample property data
-  const properties = [
-    {
-      id: 1,
-      name: 'Sunset Villa',
-      address: '123 Ocean Drive, Miami Beach',
-      type: 'Villa',
-      bedrooms: 4,
-      bathrooms: 3,
-      area: '2,500 sq ft',
-      rentPrice: '$3,500/month',
-      purchaseDate: '2022-03-15',
-      status: 'Rented'
-    },
-    {
-      id: 2,
-      name: 'Downtown Loft',
-      address: '456 City Center, New York',
-      type: 'Apartment',
-      bedrooms: 2,
-      bathrooms: 2,
-      area: '1,200 sq ft',
-      rentPrice: '$4,200/month',
-      purchaseDate: '2023-01-20',
-      status: 'Available'
-    },
-    {
-      id: 3,
-      name: 'Garden House',
-      address: '789 Green Valley, Portland',
-      type: 'House',
-      bedrooms: 3,
-      bathrooms: 2,
-      area: '1,800 sq ft',
-      rentPrice: '$2,800/month',
-      purchaseDate: '2021-11-08',
-      status: 'Rented'
-    },
-    {
-      id: 4,
-      name: 'Lakeside Cabin',
-      address: '321 Lake Shore, Colorado',
-      type: 'Cabin',
-      bedrooms: 2,
-      bathrooms: 1,
-      area: '1,000 sq ft',
-      rentPrice: '$2,200/month',
-      purchaseDate: '2023-05-12',
-      status: 'Maintenance'
-    },
-    {
-      id: 5,
-      name: 'Modern Penthouse',
-      address: '654 High Rise, Los Angeles',
-      type: 'Penthouse',
-      bedrooms: 3,
-      bathrooms: 3,
-      area: '2,200 sq ft',
-      rentPrice: '$5,500/month',
-      purchaseDate: '2022-09-30',
-      status: 'Available'
-    },
-    {
-      id: 6,
-      name: 'Cozy Studio',
-      address: '987 Art District, San Francisco',
-      type: 'Studio',
-      bedrooms: 1,
-      bathrooms: 1,
-      area: '600 sq ft',
-      rentPrice: '$2,900/month',
-      purchaseDate: '2023-02-14',
-      status: 'Rented'
-    }
-  ];
+  // Fetch properties from backend
+  useEffect(() => {
+    const loadProperties = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchProperties();
+        if (response.data?.data) {
+          setProperties(response.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch properties:', err);
+        setError('Failed to load properties');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProperties();
+  }, []);
+
+  // Map backend property data to UI format
+  const mapPropertyToUI = (property) => ({
+    id: property.id,
+    name: property.name,
+    address: property.location,
+    type: 'Property', // You can add a type field to your backend model if needed
+    bedrooms: property.beds,
+    bathrooms: property.baths,
+    area: `${property.areaSqm} sq m`,
+    rentPrice: `$${property.price}/${property.priceDuration}`,
+    purchaseDate: new Date(property.createdAt).toLocaleDateString(),
+    status: 'Available', // You can add a status field to your backend model if needed
+    mainImage: property.mainImage,
+    images: property.images || []
+  });
+
+  const mappedProperties = properties.map(mapPropertyToUI);
 
   // Filter properties based on search
-  const filteredProperties = properties.filter(property =>
+  const filteredProperties = mappedProperties.filter(property =>
     property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -102,16 +69,35 @@ export default function PropertyDashboard() {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+  const totalProperties = mappedProperties.length;
+  const rentedProperties = mappedProperties.filter(p => p.status === 'Rented').length;
+  const availableProperties = mappedProperties.filter(p => p.status === 'Available').length;
+  const maintenanceProperties = mappedProperties.filter(p => p.status === 'Maintenance').length;
 
-  const totalProperties = properties.length;
-  const rentedProperties = properties.filter(p => p.status === 'Rented').length;
-  const availableProperties = properties.filter(p => p.status === 'Available').length;
-  const maintenanceProperties = properties.filter(p => p.status === 'Maintenance').length;
-  const navigate = useNavigate();
-  const [analyzeView, setAnalyzeView] = useState('main');
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-slate-600 mt-4 text-center">Loading properties...</p>
+        </div>
+      </div>
+    );
+  }
 
-
-  
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/20">
+          <div className="text-red-500 text-center">
+            <Home className="w-12 h-12 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Error Loading Properties</h3>
+            <p className="text-slate-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -211,12 +197,20 @@ export default function PropertyDashboard() {
               onClick={() =>navigate(`/property/${property.id}`) }
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-white/20 group hover:scale-[1.02]"
             >
-              {/* Property Image Placeholder */}
-              <div className="h-48 bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 relative overflow-hidden">
+              {/* Property Image */}
+              <div className="h-48 relative overflow-hidden">
+                {property.mainImage ? (
+                  <img
+                    src={property.mainImage}
+                    alt={property.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="h-full bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center">
+                    <Home className="w-16 h-16 text-white/80" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                <div className="flex items-center justify-center h-full">
-                  <Home className="w-16 h-16 text-white/80" />
-                </div>
                 {/* Status Badge */}
                 <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusStyle(property.status)}`}>
                   {property.status}

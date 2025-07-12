@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Lock, 
@@ -16,16 +16,19 @@ import {
   Settings,
   LogOut
 } from 'lucide-react';
+import { getCurrentUser } from '../../services/api';
 
 const settings = () => {
   const [activeTab, setActiveTab] = useState('account');
   const [showPassword, setShowPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    firstName: 'Alvert',
-    lastName: 'Flore',
-    email: 'albert4578@gmail.com',
-    phone: '+0123 456 7890',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -47,6 +50,39 @@ const settings = () => {
     autoPayRent: false,
     paymentReminders: true
   });
+
+  // Fetch user information
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const response = await getCurrentUser();
+        if (response.data?.data) {
+          const userData = response.data.data;
+          setUser(userData);
+          
+          // Split the name into first and last name
+          const nameParts = userData.name.split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || '';
+          
+          setFormData(prev => ({
+            ...prev,
+            firstName,
+            lastName,
+            email: userData.email || '',
+            phone: '' // Phone not available in current user model
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch user:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const tabs = [
     { id: 'account', label: 'Account', icon: User },
@@ -77,6 +113,17 @@ const settings = () => {
       // Logout logic 
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-sm">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4 text-center">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   const ToggleSwitch = ({ checked, onChange }) => (
     <button

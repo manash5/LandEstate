@@ -27,3 +27,12 @@ export const upload = (data) => {
     }
   });
 };
+
+export const getCurrentUser = () => {
+  const token = localStorage.getItem('token');
+  return axios.get('http://localhost:4000/api/auth/init', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};

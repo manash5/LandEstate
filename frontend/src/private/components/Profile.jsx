@@ -1,34 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Phone, Mail, MoreHorizontal, ChevronRight } from 'lucide-react';
+import { getCurrentUser, fetchProperties } from '../../services/api';
 
 const Profile = () => {
   const [activeFilter, setActiveFilter] = useState('Popular');
+  const [user, setUser] = useState(null);
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const filters = ['Popular', 'Recommended', 'Newest', 'Most Recent'];
-  
-  const properties = [
-    {
-      id: 1,
-      name: 'Star Sun Hotel & Apartment',
-      location: 'North Carolina, USA',
-      price: '$500',
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'
-    },
-    {
-      id: 2,
-      name: 'Letdo Ji Hotel & Apartment',
-      location: 'New York City, USA',
-      price: '$500',
-      image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop'
-    },
-    {
-      id: 3,
-      name: 'Metro Jayakar Apartment',
-      location: 'North Carolina, USA',
-      price: '$500',
-      image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop'
-    }
-  ];
+
+  // Fetch user information and properties
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch current user information
+        const userResponse = await getCurrentUser();
+
+        // Fetch properties
+        const propertiesResponse = await fetchProperties();
+
+        if (userResponse.data?.data) {
+          setUser(userResponse.data.data);
+        }
+
+        if (propertiesResponse.data?.data) {
+          setProperties(propertiesResponse.data.data);
+        }
+
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+        setError('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Map backend property data to UI format
+  const mapPropertyToUI = (property) => ({
+    id: property.id,
+    name: property.name,
+    location: property.location,
+    price: `$${property.price}/${property.priceDuration}`,
+    image: property.mainImage || 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'
+  });
+
+  const mappedProperties = properties.map(mapPropertyToUI);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-100 my-10 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-sm">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4 text-center">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-100 my-10 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-sm">
+          <div className="text-red-500 text-center">
+            <h3 className="text-xl font-semibold mb-2">Error Loading Profile</h3>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 my-10 ">
@@ -59,8 +106,10 @@ const Profile = () => {
               
               {/* Profile Info */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">Mr. Alvert Flore</h2>
-                <p className="text-gray-500 mb-6">Admin</p>
+                <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                  {user ? user.name : 'Loading...'}
+                </h2>
+                <p className="text-gray-500 mb-6">User</p>
                 
                 <div className="space-y-4">
                   {/* Address */}
@@ -68,7 +117,7 @@ const Profile = () => {
                     <p className="text-sm font-medium text-gray-700 mb-2">Address</p>
                     <div className="flex items-center gap-2 text-gray-600">
                       <MapPin className="w-4 h-4" />
-                      <span className="text-sm">4517 Washington Ave, Manchester, Kentucky 39495</span>
+                      <span className="text-sm">Address not available</span>
                     </div>
                   </div>
                   
@@ -78,14 +127,14 @@ const Profile = () => {
                       <p className="text-sm font-medium text-gray-700 mb-2">Phone Number</p>
                       <div className="flex items-center gap-2 text-gray-600">
                         <Phone className="w-4 h-4" />
-                        <span className="text-sm">+0123 456 7890</span>
+                        <span className="text-sm">Phone not available</span>
                       </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">Email</p>
                       <div className="flex items-center gap-2 text-gray-600">
                         <Mail className="w-4 h-4" />
-                        <span className="text-sm">albert4578@gmail.com</span>
+                        <span className="text-sm">{user ? user.email : 'Loading...'}</span>
                       </div>
                     </div>
                   </div>
@@ -124,7 +173,7 @@ const Profile = () => {
           
           {/* Property Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map((property) => (
+            {mappedProperties.map((property) => (
               <div key={property.id} className="group cursor-pointer">
                 <div className="relative rounded-xl overflow-hidden mb-4">
                   <img
@@ -149,13 +198,28 @@ const Profile = () => {
             ))}
           </div>
           
+          {/* No Properties Message */}
+          {mappedProperties.length === 0 && (
+            <div className="text-center py-16">
+              <div className="bg-gray-50 rounded-2xl p-12 max-w-md mx-auto">
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">No properties found</h3>
+                <p className="text-gray-600">You haven't added any properties yet.</p>
+              </div>
+            </div>
+          )}
+          
           {/* View More Button */}
-          <div className="flex justify-center mt-8">
-            <button className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
-              <span>View More Properties</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          {mappedProperties.length > 0 && (
+            <div className="flex justify-center mt-8">
+              <button className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                <span>View More Properties</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
