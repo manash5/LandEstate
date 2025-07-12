@@ -24,7 +24,9 @@ const create = async (req, res) => {
 
         // If files are uploaded, use their filenames
         if (req.files && req.files.length > 0) {
-            images = req.files.map(file => `/uploads/${file.filename}`);
+            // Use absolute URLs for images
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            images = req.files.map(file => `${baseUrl}/uploads/${file.filename}`);
         } else if (body.images && Array.isArray(body.images)) {
             // fallback for URLs (optional)
             images = body.images;

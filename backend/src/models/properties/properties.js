@@ -41,13 +41,11 @@ export const Property = sequelize.define("Property", {
         type: DataTypes.STRING(500),
         allowNull: false,
         field: 'main_image',
-        validate: {
-            isUrl: true
-        }
+        
     },
     images: {
         type: DataTypes.ARRAY(DataTypes.STRING(500)), // Array of image URLs
-        allowNull: false,
+        allowNull: true,
         validate: {
             minImages(value) {
                 if (value.length < 1) {

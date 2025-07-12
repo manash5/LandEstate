@@ -41,19 +41,17 @@ const Navbar = (props) => {
         
 
         <div className="flex items-center gap-5 space-x-4">
-          
-          
-          <Link 
-            to={`/${props.name.toLowerCase()}`}
-            className="hidden md:block bg-[#138BBC] text-white px-4 py-2 rounded-md font-medium
-                    transform origin-center
-                    transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)
-                    hover:scale-[1.04]  hover:text-white"
-          >
-            {props.name}
-          </Link>
-          
-           
+          {props.name !== 'null' && (
+            <Link 
+              to={`/${props.name.toLowerCase()}`}
+              className="hidden md:block bg-[#138BBC] text-white px-4 py-2 rounded-md font-medium
+                      transform origin-center
+                      transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)
+                      hover:scale-[1.04]  hover:text-white"
+            >
+              {props.name}
+            </Link>
+          )}
         </div>
       </div>
 

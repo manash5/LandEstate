@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import AddPropertyModal from "./AddPropertyModel";
+import { useForm } from "react-hook-form";
 import { Home, Building, Users, Star, Settings, Bell, Search, MapPin, Bed, Bath, Square, Wifi, Car, Utensils, Wind, Phone, MessageCircle, ArrowLeft, ChevronDown, Filter, Plus, X } from 'lucide-react';
 
 const Properties = () => {
@@ -402,163 +404,7 @@ const Properties = () => {
     </div>
   );
 
-  const AddPropertyModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Add New Property</h2>
-          <button 
-            onClick={() => setIsAddModalOpen(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Property Name</label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newProperty.title}
-              onChange={(e) => setNewProperty({...newProperty, title: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={newProperty.location}
-              onChange={(e) => setNewProperty({...newProperty, location: e.target.value})}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newProperty.price}
-                onChange={(e) => setNewProperty({...newProperty, price: e.target.value})}
-                placeholder="$"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-              <select
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newProperty.type}
-                onChange={(e) => setNewProperty({...newProperty, type: e.target.value})}
-              >
-                <option value="Apartment">Apartment</option>
-                <option value="Hotel">Hotel</option>
-                <option value="House">House</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Beds</label>
-              <input
-                type="number"
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newProperty.beds}
-                onChange={(e) => setNewProperty({...newProperty, beds: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Baths</label>
-              <input
-                type="number"
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newProperty.baths}
-                onChange={(e) => setNewProperty({...newProperty, baths: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Area</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={newProperty.area}
-                onChange={(e) => setNewProperty({...newProperty, area: e.target.value})}
-                placeholder="e.g., 28M"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="4"
-              value={newProperty.description}
-              onChange={(e) => setNewProperty({...newProperty, description: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Images (URLs)</label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter image URL"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && e.target.value) {
-                  setNewProperty({
-                    ...newProperty,
-                    images: [...newProperty.images, e.target.value]
-                  });
-                  e.target.value = '';
-                }
-              }}
-            />
-            <div className="mt-2 flex flex-wrap gap-2">
-              {newProperty.images.map((image, index) => (
-                <div key={index} className="relative">
-                  <img
-                    src={image}
-                    alt={`Property ${index + 1}`}
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
-                  <button
-                    onClick={() => {
-                      const newImages = [...newProperty.images];
-                      newImages.splice(index, 1);
-                      setNewProperty({...newProperty, images: newImages});
-                    }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-4 mt-6">
-            <button
-              onClick={() => setIsAddModalOpen(false)}
-              className="px-6 py-2 border border-gray-200 rounded-xl hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddProperty}
-              className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
-            >
-              Upload Property
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
@@ -652,8 +498,15 @@ const Properties = () => {
             <PropertyDetails property={selectedProperty} />
           )}
         </div>
-      </div>
-      {isAddModalOpen && <AddPropertyModal />}
+      {/* Place this just before the closing div */}
+      {isAddModalOpen && (
+        <AddPropertyModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onAddProperty={handleAddProperty}
+        />
+      )}
+    </div>
     </div>
   );
 };
