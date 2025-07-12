@@ -75,7 +75,7 @@ const EmployeeLogin = () => {
 
     return (
         <>
-        <Navbar name = "Register"/>
+        <Navbar name = "null"/>
         <div className="min-h-[100vh] bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 flex items-center justify-center p-4">
             {isLoading ? (
                 <Loader/>
@@ -150,29 +150,7 @@ const EmployeeLogin = () => {
                         </div>
                     </form>
 
-                    {/* Divider */}
-                    <div className="my-8">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300"></div>
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-4 bg-white text-gray-500">or</span>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    {/* Register Link */}
-                    <div className="mt-8 text-center">
-                        <span className="text-gray-600">Don't have an account? </span>
-                        <button
-                            onClick={() => navigate('/register')}
-                            className="text-green-600 hover:text-green-700 font-semibold transition-colors duration-200 hover:underline"
-                        >
-                            Register
-                        </button>
-                    </div>
+                    
                 </div>
             </div>)}
         </div>
