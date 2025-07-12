@@ -29,7 +29,9 @@ const create = async (req, res) => {
         const users = await User.create({
             name: body.name,
             email: body.email,
-            password: body.password
+            password: body.password,
+            phone: body.phone || null,
+            address: body.address || null
         });
         res.status(201).send({ data: users, message: "successfully created user" })
     } catch (e) {
@@ -55,7 +57,9 @@ const update = async (req, res) => {
         }
         oldUser.name = body.name;
         oldUser.password = body.password || oldUser.password;
-        oldUser.email = body.email
+        oldUser.email = body.email;
+        oldUser.phone = body.phone || oldUser.phone;
+        oldUser.address = body.address || oldUser.address;
         oldUser.save();
         res.status(201).send({ data: oldUser, message: "user updated successfully" })
     } catch (e) {

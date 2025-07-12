@@ -117,7 +117,7 @@ const Profile = () => {
                     <p className="text-sm font-medium text-gray-700 mb-2">Address</p>
                     <div className="flex items-center gap-2 text-gray-600">
                       <MapPin className="w-4 h-4" />
-                      <span className="text-sm">Address not available</span>
+                      <span className="text-sm">{user ? user.address: "loading..."}</span>
                     </div>
                   </div>
                   
@@ -127,7 +127,7 @@ const Profile = () => {
                       <p className="text-sm font-medium text-gray-700 mb-2">Phone Number</p>
                       <div className="flex items-center gap-2 text-gray-600">
                         <Phone className="w-4 h-4" />
-                        <span className="text-sm">Phone not available</span>
+                        <span className="text-sm">{user ? user.phone: "loading..."}</span>
                       </div>
                     </div>
                     <div>

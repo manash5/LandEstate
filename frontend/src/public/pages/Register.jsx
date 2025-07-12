@@ -24,9 +24,11 @@ const Register = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: data.username, 
+          name: `${data.firstName} ${data.lastName}`, 
           email: data.email,
           password: data.password,
+          phone: data.phone,
+          address: data.address,
         }),
       });
 
@@ -138,6 +140,37 @@ const Register = () => {
           <form onSubmit = {handleSubmit(handleRegister)} className="space-y-6">
           {/* Login Form */}
             <div className="space-y-6">
+              
+
+              {/* Name Fields Row */}
+              <div className="flex gap-4">
+                {/* First Name Input */}
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    {...register("firstName", { required: "First name is required" })}
+                    placeholder="Enter your first name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
+                  />
+                  {errors.firstName && (
+      <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>
+    )}
+                </div>
+
+                {/* Last Name Input */}
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    {...register("lastName", { required: "Last name is required" })}
+                    placeholder="Enter your last name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
+                  />
+                  {errors.lastName && (
+      <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>
+    )}
+                </div>
+              </div>
+
               {/* Email Input */}
               <div className="relative">
                 <input
@@ -151,16 +184,35 @@ const Register = () => {
   )}
               </div>
 
-              {/* username input  */}
+              {/* Phone Number Input */}
               <div className="relative">
                 <input
-                  type="text"
-                  {...register("username", { required: "Username is required" })}
-                  placeholder="Enter your username"
+                  type="tel"
+                  {...register("phone", { 
+                    required: "Phone number is required",
+                    pattern: {
+                      value: /^[\+]?[1-9][\d]{0,15}$/,
+                      message: "Please enter a valid phone number"
+                    }
+                  })}
+                  placeholder="Enter your phone number"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400"
                 />
-                {errors.username && (
-    <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>
+                {errors.phone && (
+    <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+  )}
+              </div>
+
+              {/* Address Input */}
+              <div className="relative">
+                <textarea
+                  {...register("address", { required: "Address is required" })}
+                  placeholder="Enter your address"
+                  rows="1"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none placeholder-gray-400 resize-none"
+                />
+                {errors.address && (
+    <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>
   )}
               </div>
 

@@ -18,6 +18,14 @@ export const User=sequelize.define("User",{
       },
       password:{
         type:DataTypes.STRING
+      },
+      phone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      address: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       }
 }, {
     tableName: 'Users',
