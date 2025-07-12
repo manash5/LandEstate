@@ -28,13 +28,15 @@ const AddPropertyModal = ({
   },
 });
 
+const [selectedFiles, setSelectedFiles] = React.useState([]);
   const images = watch("images", []);
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setValue("images", urls);
-  };
+  const files = Array.from(e.target.files);
+  setSelectedFiles(prev => [...prev, ...files]);
+  const urls = files.map((file) => URL.createObjectURL(file));
+  setValue("images", [...images, ...urls]);
+};
 
   const onSubmit = async (data) => {
     const formData = new FormData();
@@ -50,13 +52,9 @@ const AddPropertyModal = ({
     formData.append("hasParking", data.hasParking);
     formData.append("description", data.description);
 
-    // Append all selected images as files
-    const fileInput = document.getElementById("fileInput");
-    if (fileInput && fileInput.files.length > 0) {
-      Array.from(fileInput.files).forEach((file) => {
-        formData.append("images", file); 
-      });
-    }
+    selectedFiles.forEach((file) => {
+    formData.append("images", file);
+  });
 
     try {
       const response = await upload(formData); 

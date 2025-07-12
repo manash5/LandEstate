@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddPropertyModal from "./AddPropertyModel";
 import { useForm } from "react-hook-form";
 import { Home, Building, Users, Star, Settings, Bell, Search, MapPin, Bed, Bath, Square, Wifi, Car, Utensils, Wind, Phone, MessageCircle, ArrowLeft, ChevronDown, Filter, Plus, X } from 'lucide-react';
+import { fetchProperties } from '../../services/api';
 
 const Properties = () => {
   const [currentView, setCurrentView] = useState('list'); // 'list' or 'details'
@@ -9,6 +10,7 @@ const Properties = () => {
   const [activeTab, setActiveTab] = useState('property');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [dbProperties, setDbProperties] = useState([]);
   const [newProperty, setNewProperty] = useState({
     title: '',
     location: '',
@@ -187,6 +189,19 @@ const Properties = () => {
     }
   ];
 
+  useEffect(() => {
+    // Fetch properties from backend
+    fetchProperties()
+      .then(res => {
+        if (res.data?.data) {
+          setDbProperties(res.data.data);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch properties:', err);
+      });
+  }, []);
+
   const filterOptions = {
     status: ['Any Status', 'For Sale', 'For Rent'],
     type: ['Any Type', 'Apartments', 'Houses', 'Commercial', 'Hotels'],
@@ -278,6 +293,34 @@ const Properties = () => {
       </div>
     </div>
   );
+
+  const mapDbPropertyToCard = (property) => ({
+    id: property.id,
+    title: property.name,
+    location: property.location,
+    price: property.price,
+    beds: property.beds,
+    baths: property.baths,
+    area: property.areaSqm ? `${property.areaSqm}M` : '',
+    image: property.mainImage,
+    images: property.images || [property.mainImage],
+    type: property.type || 'Apartment',
+    rating: 5,
+    facilities: [
+      property.hasKitchen ? 'Kitchen' : null,
+      property.hasBalcony ? 'Balcony' : null,
+      property.hasParking ? 'Parking Area' : null,
+      'Wifi'
+    ].filter(Boolean),
+    description: property.description || '',
+    agent: {
+      name: 'Agent',
+      role: 'Agent',
+      location: property.location,
+      properties: 1,
+      avatar: ''
+    }
+  });
 
   const PropertyDetails = ({ property }) => (
     <div className="space-y-6">
@@ -475,6 +518,11 @@ const Properties = () => {
 
               {/* Property Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Render DB properties first */}
+                {dbProperties.map((property) => (
+                  <PropertyCard key={`db-${property.id}`} property={mapDbPropertyToCard(property)} />
+                ))}
+                {/* Render static properties */}
                 {properties.map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
