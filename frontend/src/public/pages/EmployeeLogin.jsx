@@ -6,7 +6,6 @@ import Loader from '../components/ui/Loader';
 
 import { toast, Bounce } from 'react-toastify';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { log } from 'three/tsl';
 import { getLoggedIn } from '../../services/api';
 
 const EmployeeLogin = () => {
@@ -22,8 +21,9 @@ const EmployeeLogin = () => {
               const response = await getLoggedIn(data); 
         
               const result = response.data;
-              console.log(result?.['access_token'])
-              localStorage.setItem("token",result?.['data']?.['access_token'])
+              console.log('Login response:', result);
+              console.log('Token:', result?.data?.access_token);
+              localStorage.setItem("token", result?.data?.access_token);
 
         
               if (response) {
@@ -75,11 +75,11 @@ const EmployeeLogin = () => {
 
     return (
         <>
-        <Navbar name = "null"/>
+        <Navbar name="null"/>
         <div className="min-h-[100vh] bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 flex items-center justify-center p-4">
             {isLoading ? (
                 <Loader/>
-            ): (
+            ) : (
             <div className="w-full max-w-xl">
                 <div className="bg-white text-black shadow-xl p-8 transform transition-all duration-300 hover:shadow-3xl">
                     {/* Header */}
@@ -149,13 +149,12 @@ const EmployeeLogin = () => {
                             </button>
                         </div>
                     </form>
-
-                    
                 </div>
-            </div>)}
+            </div>
+            )}
         </div>
         </>
-    )
+    );
 }
 
 export default EmployeeLogin; 

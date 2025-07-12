@@ -88,6 +88,15 @@ export const Property = sequelize.define("Property", {
     description: {
         type: DataTypes.TEXT,
     },
+    userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        field: 'user_id',
+        references: {
+            model: 'Users',
+            key: 'id'
+        }
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

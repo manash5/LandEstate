@@ -53,7 +53,13 @@ const Properties = () => {
       rating: 5,
       facilities: ['Kitchen', 'Balcony', 'Wifi', 'Smoking Area', 'Parking Area'],
       description: 'Beautiful modern apartment with stunning city views. This luxurious property features spacious rooms, contemporary design, and premium amenities. Perfect for those seeking comfort and style in the heart of the city.',
-      
+      agent: {
+        name: 'David Thompson',
+        location: 'North Carolina, USA',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 567-8901',
+        email: 'david.thompson@example.com',
+      }
     },
     {
       id: 2,
@@ -75,10 +81,10 @@ const Properties = () => {
       description: 'Elegant hotel apartment with premium facilities and exceptional service. Features modern architecture and world-class amenities for the discerning guest.',
       agent: {
         name: 'Sarah Johnson',
-        role: 'Agent',
         location: 'Cundong City, USA',
-        properties: 15,
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
+        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 123-4567',
+        email: 'sarah.johnson@example.com',
       }
     },
     {
@@ -101,10 +107,10 @@ const Properties = () => {
       description: 'Contemporary apartment with breathtaking views and modern amenities. Perfect blend of luxury and comfort in a prime location.',
       agent: {
         name: 'Michael Chen',
-        role: 'Agent',
         location: 'Margoluwin Catonya, USA',
-        properties: 8,
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 234-5678',
+        email: 'michael.chen@example.com',
       }
     },
     {
@@ -127,10 +133,10 @@ const Properties = () => {
       description: 'Charming apartment with beautiful garden views and peaceful surroundings. Ideal for those seeking tranquility without compromising on modern conveniences.',
       agent: {
         name: 'Emily Davis',
-        role: 'Agent',
         location: 'North Carolina, USA',
-        properties: 12,
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 345-6789',
+        email: 'emily.davis@example.com',
       }
     },
     {
@@ -153,10 +159,10 @@ const Properties = () => {
       description: 'Sophisticated hotel apartment with exceptional service and prime location. Features elegant interiors and comprehensive amenities for a luxurious stay.',
       agent: {
         name: 'James Wilson',
-        role: 'Agent',
         location: 'Suryodiningratan, UK',
-        properties: 18,
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face'
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+        phone: '+44 (0) 20 7123 4567',
+        email: 'james.wilson@example.com',
       }
     },
     {
@@ -179,10 +185,10 @@ const Properties = () => {
       description: 'Luxury hotel with spa facilities and premium amenities. Perfect for relaxation and comfort with world-class service and stunning architectural design.',
       agent: {
         name: 'Lisa Rodriguez',
-        role: 'Agent',
         location: 'North Carolina, USA',
-        properties: 14,
-        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face'
+        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 456-7890',
+        email: 'lisa.rodriguez@example.com',
       }
     }
   ];
@@ -192,6 +198,7 @@ const Properties = () => {
     fetchProperties()
       .then(res => {
         if (res.data?.data) {
+          console.log('Fetched properties with user data:', res.data.data);
           setDbProperties(res.data.data);
         }
       })
@@ -226,6 +233,11 @@ const Properties = () => {
       .catch(err => {
         console.error('Failed to fetch properties:', err);
       });
+  };
+
+  const handleChatClick = (agent) => {
+    // For now, just show an alert. You can implement actual chat functionality later
+    alert(`Starting chat with ${agent.name} (${agent.phone})`);
   };
 
   const PropertyCard = ({ property }) => (
@@ -300,11 +312,16 @@ const Properties = () => {
     description: property.description || '',
     priceDuration: property.priceDuration, // Add priceDuration for filtering
     agent: {
-      name: 'Agent',
-      role: 'Agent',
+      name: property.user?.name || 'Unknown Agent',
+      role: 'Property Agent',
       location: property.location,
-      properties: 1,
-      avatar: ''
+      properties: 1, // This could be calculated from user's properties count
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face', // Default avatar
+      phone: property.user?.phone || 'No phone available',
+      email: property.user?.email || 'No email available',
+      experience: 'New Agent', // This could be calculated based on user's join date
+      rating: 5.0, // Default rating for new agents
+      responseTime: 'Usually responds within 24 hours'
     }
   });
 
@@ -321,7 +338,7 @@ const Properties = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Image Gallery */}
@@ -427,6 +444,54 @@ const Properties = () => {
               <h3 className="text-lg font-bold text-gray-800 mb-4">Description</h3>
               <p className="text-gray-600 leading-relaxed">{property.description}</p>
             </div>
+          </div>
+        </div>
+
+        {/* Agent Profile Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-8">
+            <div className="text-center mb-6">
+              <div className="relative inline-block">
+                <img
+                  src={property.agent.avatar}
+                  alt={property.agent.name}
+                  className="w-24 h-24 rounded-full object-cover mx-auto mb-4 border-4 border-blue-100"
+                />
+                
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">{property.agent.name}</h3>
+              <p className="text-gray-500 text-sm">{property.agent.role}</p>
+            </div>
+
+            
+
+            {/* Agent Details */}
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center text-sm">
+                <MapPin className="w-4 h-4 text-gray-400 mr-2" />
+                <span className="text-gray-600">{property.agent.location}</span>
+              </div>
+              {property.agent.phone && property.agent.phone !== 'No phone available' && (
+                <div className="flex items-center text-sm">
+                  <Phone className="w-4 h-4 text-gray-400 mr-2" />
+                  <span className="text-gray-600">{property.agent.phone}</span>
+                </div>
+              )}
+              {property.agent.email && property.agent.email !== 'No email available' && (
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600">{property.agent.email}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Button */}
+            <button
+              onClick={() => handleChatClick(property.agent)}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Chat with Agent
+            </button>
           </div>
         </div>
       </div>

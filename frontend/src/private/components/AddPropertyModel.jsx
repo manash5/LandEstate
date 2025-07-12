@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
-import {upload} from '../../services/api'
+import {upload, getCurrentUser} from '../../services/api'
 import { ToastContainer, Bounce, toast } from "react-toastify";
 
 
@@ -30,7 +30,86 @@ const AddPropertyModal = ({
 });
 
 const [selectedFiles, setSelectedFiles] = React.useState([]);
-  const images = watch("images", []);
+const [currentUser, setCurrentUser] = useState(null);
+const images = watch("images", []);
+
+// Fetch current user on component mount
+useEffect(() => {
+  const fetchCurrentUser = async () => {
+    try {
+      // Debug: Check all localStorage items
+      console.log('All localStorage items:', Object.keys(localStorage));
+      
+      // Check if token exists
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in localStorage');
+        toast.error('Authentication token not found. Please login again.', {
+          position: "bottom-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+          transition: Bounce,
+        });
+        return;
+      }
+
+      console.log('Token found:', token.substring(0, 20) + '...');
+      
+      const response = await getCurrentUser();
+      console.log('getCurrentUser response:', response);
+      
+      if (response.data?.data) {
+        setCurrentUser(response.data.data);
+        console.log('Current user set:', response.data.data);
+      } else {
+        console.error('No user data in response:', response);
+        toast.error('No user data received from server', {
+          position: "bottom-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+          transition: Bounce,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      let errorMessage = 'Failed to fetch user information';
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please login again.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Access denied. Please check your authentication.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast.error(errorMessage, {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+      });
+    }
+  };
+
+  fetchCurrentUser();
+}, []);
 
   const handleFileChange = (e) => {
   const files = Array.from(e.target.files);
@@ -40,6 +119,21 @@ const [selectedFiles, setSelectedFiles] = React.useState([]);
 };
 
   const onSubmit = async (data) => {
+    if (!currentUser) {
+      toast.error('User information not available. Please try again.', {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+      });
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("location", data.location);
@@ -52,6 +146,7 @@ const [selectedFiles, setSelectedFiles] = React.useState([]);
     formData.append("hasBalcony", data.hasBalcony);
     formData.append("hasParking", data.hasParking);
     formData.append("description", data.description);
+    formData.append("userId", currentUser.id);
 
     selectedFiles.forEach((file) => {
     formData.append("images", file);

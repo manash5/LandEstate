@@ -1,11 +1,17 @@
-import { Property } from '../../models/index.js';
+import { Property, User } from '../../models/index.js';
 
 /**
  * Fetch all properties
  */
 const getAll = async (req, res) => {
     try {
-        const properties = await Property.findAll();
+        const properties = await Property.findAll({
+            include: [{
+                model: User,
+                as: 'user',
+                attributes: ['id', 'name', 'email', 'phone', 'address']
+            }]
+        });
         res.status(200).send({ data: properties, message: "Successfully fetched properties" });
     } catch (e) {
         console.error(e);
@@ -32,8 +38,8 @@ const create = async (req, res) => {
             images = body.images;
         }
 
-        if (!body?.name || !body?.location || !body?.price || images.length < 1) {
-            return res.status(400).send({ message: "Invalid payload: name, location, price, and at least one image are required" });
+        if (!body?.name || !body?.location || !body?.price || images.length < 1 || !body?.userId) {
+            return res.status(400).send({ message: "Invalid payload: name, location, price, userId, and at least one image are required" });
         }
 
         const property = await Property.create({
@@ -49,7 +55,8 @@ const create = async (req, res) => {
             hasKitchen: body.hasKitchen ?? false,
             hasBalcony: body.hasBalcony ?? false,
             hasParking: body.hasParking ?? false,
-            description: body.description || ''
+            description: body.description || '',
+            userId: body.userId
         });
 
         res.status(201).send({ data: property, message: "Successfully created property" });
@@ -119,7 +126,14 @@ const deleteById = async (req, res) => {
 const getById = async (req, res) => {
     try {
         const { id } = req.params;
-        const property = await Property.findOne({ where: { id } });
+        const property = await Property.findOne({ 
+            where: { id },
+            include: [{
+                model: User,
+                as: 'user',
+                attributes: ['id', 'name', 'email', 'phone', 'address']
+            }]
+        });
 
         if (!property) {
             return res.status(404).send({ message: "Property not found" });

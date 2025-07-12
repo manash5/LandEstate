@@ -23,8 +23,9 @@ const Login = () => {
               const response = await getLoggedIn(data); 
         
               const result = response.data;
-              console.log(result?.['access_token'])
-              localStorage.setItem("token",result?.['data']?.['access_token'])
+              console.log('Login response:', result);
+              console.log('Token:', result?.data?.access_token);
+              localStorage.setItem("token", result?.data?.access_token);
 
         
               if (response) {

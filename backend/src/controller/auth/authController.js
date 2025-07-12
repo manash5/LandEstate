@@ -33,14 +33,29 @@ const login = async (req, res) => {
 
 const init = async (req, res) => {
   try {
+    console.log('Init endpoint called');
+    console.log('req.user:', req.user);
+    
+    if (!req.user) {
+      console.error('No user found in request');
+      return res.status(401).json({ error: "No user found in request" });
+    }
+    
+    if (!req.user.user) {
+      console.error('No user data in req.user:', req.user);
+      return res.status(401).json({ error: "Invalid user data structure" });
+    }
+    
     const user = req.user.user;
+    console.log('User data:', user);
+    
     delete user.password;
     res
-      .status(201)
-      .send({ data: user, message: "successfully fetched current  user" });
+      .status(200)
+      .send({ data: user, message: "successfully fetched current user" });
   } catch (e) {
-    console.log(e);
-    res.status(500).json({ error: "Failed to fetch users" });
+    console.error('Error in init endpoint:', e);
+    res.status(500).json({ error: "Failed to fetch user" });
   }
 };
 
