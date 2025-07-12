@@ -18,6 +18,15 @@ export const fetchProperties = () => {
     }
   });
 };
+
+export const fetchUserProperties = (userId) => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${PROP}/user/${userId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
 export const upload = (data) => {
   const token = localStorage.getItem('token'); // or wherever you store your JWT
   return axios.post(PROP, data, {

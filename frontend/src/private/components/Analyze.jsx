@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Home, MapPin, Calendar, DollarSign } from 'lucide-react';
 import AnalyzeClick from './AnalyzeClick';
 import { useNavigate } from 'react-router-dom';
-import { fetchProperties } from '../../services/api';
+import { fetchUserProperties, getCurrentUser } from '../../services/api';
 
 export default function PropertyDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,7 +16,17 @@ export default function PropertyDashboard() {
     const loadProperties = async () => {
       try {
         setLoading(true);
-        const response = await fetchProperties();
+        
+        // First get the current user
+        const userResponse = await getCurrentUser();
+        const currentUser = userResponse.data?.data;
+        
+        if (!currentUser || !currentUser.id) {
+          throw new Error('User not authenticated');
+        }
+        
+        // Then fetch only the user's properties
+        const response = await fetchUserProperties(currentUser.id);
         if (response.data?.data) {
           setProperties(response.data.data);
         }

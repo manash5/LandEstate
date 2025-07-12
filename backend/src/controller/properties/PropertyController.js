@@ -146,10 +146,32 @@ const getById = async (req, res) => {
     }
 }
 
+/**
+ * Fetch properties by user id
+ */
+const getByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const properties = await Property.findAll({
+            where: { userId },
+            include: [{
+                model: User,
+                as: 'user',
+                attributes: ['id', 'name', 'email', 'phone', 'address']
+            }]
+        });
+        res.status(200).send({ data: properties, message: "Successfully fetched user properties" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Failed to fetch user properties' });
+    }
+}
+
 export const PropertyController = {
     getAll,
     create,
     getById,
+    getByUserId,
     deleteById,
     update
 };
