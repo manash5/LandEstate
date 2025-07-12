@@ -1,5 +1,6 @@
 import { User } from "../../models/index.js";
 import { generateToken } from "../../security/jwt-util.js";
+import bcrypt from "bcrypt";
 
 const login = async (req, res) => {
   try {
@@ -8,18 +9,23 @@ const login = async (req, res) => {
       return res.status(500).send({ message: "email is required" });
     }
     if (req.body.password == null) {
-      return res.status(500).send({ message: "email is required" });
+      return res.status(500).send({ message: "password is required" });
     }
     const user = await User.findOne({ where: { email: req.body.email } });
     if (!user) {
       return res.status(500).send({ message: "user not found" });
     }
-    if (user.password == req.body.password) {
+    
+    // Compare password using bcrypt
+    const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
+    if (isPasswordValid) {
       const token = generateToken({ user: user.toJSON() });
       return res.status(200).send({
         data: { access_token: token },
         message: "successfully logged in",
       });
+    } else {
+      return res.status(401).send({ message: "Invalid password" });
     }
   } catch (e) {
     console.log(e);

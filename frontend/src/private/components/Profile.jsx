@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, Phone, Mail, MoreHorizontal, ChevronRight } from 'lucide-react';
-import { getCurrentUser, fetchProperties } from '../../services/api';
+import { getCurrentUser, fetchUserProperties } from '../../services/api';
 
 const Profile = () => {
   const [activeFilter, setActiveFilter] = useState('Popular');
@@ -19,13 +19,17 @@ const Profile = () => {
         
         // Fetch current user information
         const userResponse = await getCurrentUser();
+        const currentUser = userResponse.data?.data;
 
-        // Fetch properties
-        const propertiesResponse = await fetchProperties();
-
-        if (userResponse.data?.data) {
-          setUser(userResponse.data.data);
+        if (!currentUser || !currentUser.id) {
+          throw new Error('User not authenticated');
         }
+
+        // Set user data
+        setUser(currentUser);
+
+        // Fetch only the user's properties
+        const propertiesResponse = await fetchUserProperties(currentUser.id);
 
         if (propertiesResponse.data?.data) {
           setProperties(propertiesResponse.data.data);
