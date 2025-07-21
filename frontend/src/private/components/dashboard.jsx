@@ -213,26 +213,7 @@ const dashboard = () => {
 
             {/* Right Sidebar */}
             <div className="space-y-6">
-              {/* Property Referrals */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Property Referrals</h3>
-                <div className="space-y-4">
-                  {referralData.map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">{item.source}</span>
-                        <span className="text-sm font-semibold text-gray-800">{item.percentage}%</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${item.color}`}
-                          style={{ width: `${item.percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              
 
               {/* Featured Properties */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

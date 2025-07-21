@@ -1,6 +1,7 @@
 import { User } from "../../models/index.js";
 import { generateToken } from "../../security/jwt-util.js";
 import bcrypt from "bcrypt";
+import { sendLoginNotification } from "../../utils/sendMail.js";
 
 const login = async (req, res) => {
   try {
@@ -20,6 +21,10 @@ const login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
     if (isPasswordValid) {
       const token = generateToken({ user: user.toJSON() });
+      // Send login notification email (non-blocking)
+      sendLoginNotification(user.email).catch((err) => {
+        console.error('Failed to send login notification email:', err);
+      });
       return res.status(200).send({
         data: { access_token: token },
         message: "successfully logged in",

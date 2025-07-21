@@ -11,15 +11,37 @@ import {
   MessageSquare, 
   ScanSearch
 } from 'lucide-react';
+import { getCurrentUser } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await getCurrentUser();
+        if (response.data?.data) {
+          setUser(response.data.data);
+        }
+      } catch (err) {
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
 
   const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
     { icon: Building, label: 'Properties' },
     { icon: ScanSearch, label: 'Analyze' },
-    { icon: PartyPopper, label: 'PropAI' },
     { icon: User, label: 'Profile' },
     { icon: MessageSquare, label: 'Message' },
     { icon: Settings, label: 'Settings' },
@@ -77,12 +99,12 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
             isCollapsed ? 'justify-center' : ''
           }`}>
             <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 m-0">
-              <span className="text-white font-semibold text-sm">U</span>
+              <span className="text-white font-semibold text-sm">{user ? user.name?.[0]?.toUpperCase() : 'U'}</span>
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0 items-center justify-center">
-                <p className="text-sm font-medium text-white truncate m-0">User Name</p>
-                <p className="text-xs text-gray-400 truncate m-0">user@example.com</p>
+                <p className="text-sm font-medium text-white truncate m-0">{user ? user.name : 'User Name'}</p>
+                <p className="text-xs text-gray-400 truncate m-0">{user ? user.email : 'user@example.com'}</p>
               </div>
             )}
           </div>
@@ -121,6 +143,17 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
             </button>
           ))}
         </nav>
+        {/* Logout button below navigation */}
+        <div className="px-4 mt-2">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-xl w-full text-left transition-all duration-300 ease-in-out group relative bg-red-500/10 border border-red-500/40 text-red-300 active:bg-red-700/40 active:text-white font-medium`}
+            title="Logout"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" /></svg>
+            <span className={isCollapsed ? 'hidden' : ''}>Logout</span>
+          </button>
+        </div>
       </div>
     </div>
   );

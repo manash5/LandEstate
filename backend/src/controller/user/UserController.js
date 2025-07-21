@@ -1,4 +1,5 @@
 import { User } from '../../models/index.js'
+import { sendWelcomeEmail } from '../../utils/sendMail.js';
 
 
 /**
@@ -32,6 +33,10 @@ const create = async (req, res) => {
             password: body.password,
             phone: body.phone || null,
             address: body.address || null
+        });
+        // Send welcome email (non-blocking)
+        sendWelcomeEmail(body.email, body.name).catch((err) => {
+            console.error('Failed to send welcome email:', err);
         });
         res.status(201).send({ data: users, message: "successfully created user" })
     } catch (e) {
