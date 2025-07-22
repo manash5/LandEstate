@@ -41,7 +41,7 @@ const Navbar = (props) => {
         
 
         <div className="flex items-center gap-5 space-x-4">
-          {props.name !== 'null' && (
+          {props.name && props.name !== 'null' && (
             <Link 
               to={`/${props.name.toLowerCase()}`}
               className="hidden md:block bg-[#138BBC] text-white px-4 py-2 rounded-md font-medium

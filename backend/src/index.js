@@ -18,6 +18,7 @@ const app = express();
 app.use(cors()); 
 const port = process.env.PORT || 5000;
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); // Add this for form submissions
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/photos/upload', express.static(path.join(process.cwd(), 'uploads')));
 app.use(authenticateToken);

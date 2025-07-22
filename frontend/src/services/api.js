@@ -4,7 +4,13 @@ const UPLOADAPI = 'http://localhost:4000/api/file/upload'
 const PROP = 'http://localhost:4000/api/properties'
 const API = "http://localhost:4000/api/users";
 const API1 = "http://localhost:4000/api/auth/login"
+const FORGOT_PASSWORD_API = "http://localhost:4000/api/auth/forgot-password"
+const RESET_PASSWORD_API = "http://localhost:4000/api/auth/reset-password"
+const VERIFY_RESET_TOKEN_API = "http://localhost:4000/api/auth/verify-reset-token"
 export const getLoggedIn = (data) => axios.post(API1, data); 
+export const forgotPassword = (data) => axios.post(FORGOT_PASSWORD_API, data);
+export const resetPassword = (data) => axios.post(RESET_PASSWORD_API, data);
+export const verifyResetToken = (token) => axios.get(`${VERIFY_RESET_TOKEN_API}/${token}`); 
 export const getUsers = () => axios.get(API);
 export const getUsersById = (id) => axios.get(`${API}/${id}`);
 export const createUser = (data) => axios.post(API, data);

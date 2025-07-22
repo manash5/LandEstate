@@ -187,6 +187,17 @@ const Login = () => {
                                 {errors.password && <span className="text-red-500 text-sm mt-1">{errors.password.message}</span>}
                             </div>
 
+                            {/* Forgot Password Link */}
+                            <div className="text-right">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/forgotpass')}
+                                    className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 hover:underline"
+                                >
+                                    Forgot Password?
+                                </button>
+                            </div>
+
                             {/* Login Button */}
                             <button
                                 type="submit"

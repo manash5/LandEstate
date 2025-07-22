@@ -15,6 +15,8 @@ import Test from '../components/test';
 import NavigateClick from '../components/AnalyzeClick';
 import EmployeeLayout from '../employee/pages/layout'
 import EmployeeLogin from '../../public/pages/EmployeeLogin';
+import ForgotPass from '../../public/pages/ForgotPass';
+import ResetPassword from '../../public/pages/ResetPassword';
 
 const AppRoutes = () => {
   return (
@@ -34,6 +36,8 @@ const AppRoutes = () => {
         <Route path="/property/:id" element={<NavigateClick />} />
         <Route path = 'employee/layout' element = {<EmployeeLayout/>} />
         <Route path = 'employee/login' element = {<EmployeeLogin/>} />
+        <Route path = '/forgotpass' element = {<ForgotPass/>} />
+        <Route path = '/reset-password' element = {<ResetPassword/>} />
 
 
         

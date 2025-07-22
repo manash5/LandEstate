@@ -5,10 +5,21 @@ dotenv.config();
 // Middleware to verify JWT token
 export function authenticateToken(req, res, next) {
   console.log('AuthenticateToken middleware called for path:', req.path);
+  console.log('Full URL:', req.url);
+  console.log('Method:', req.method);
   
-  // Skip token verification for the login route
-  if (req.path === "/api/auth/login" || req.path === '/api/register') {
-    console.log('Skipping authentication for:', req.path);
+  // Skip token verification for public auth routes
+  const publicPaths = [
+    "/api/auth/login",
+    "/api/register", 
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password",
+  ];
+  
+  const isPublicPath = publicPaths.includes(req.path) || req.path.startsWith('/api/auth/verify-reset-token/');
+  
+  if (isPublicPath) {
+    console.log('✅ Skipping authentication for:', req.path);
     return next();
   }
 
