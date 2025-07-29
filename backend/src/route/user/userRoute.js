@@ -1,16 +1,27 @@
 import express from 'express'
 import { UserController } from '../../controller/index.js';
 import upload from '../../middleware/multerConfig.js';
-const router=express.Router();
-router.get("/",UserController.getAll);
-router.post("/",UserController.create);
-router.patch("/:id",UserController.update);
-router.post("/:id/profile-image", upload.single("profileImage"), UserController.updateProfileImage);
-router.get("/:id",UserController.getById);
-router.delete("/:id",UserController.delelteById);
+import { authenticateToken } from '../../middleware/token-middleware.js';
+import { authorizeUser } from '../../middleware/auth-middleware.js';
 
+const router = express.Router();
 
+// Public routes (no authentication required)
+router.get("/", UserController.getAll);
+router.post("/", UserController.create);
 
-export  {router as userRouter };
+// Protected routes (authentication required)
+router.patch("/:id", authenticateToken, UserController.update);
+router.post("/:id/profile-image", authenticateToken, authorizeUser, upload.single("profileImage"), UserController.updateProfileImage);
+router.get("/:id", authenticateToken, UserController.getById);
+router.delete("/:id", authenticateToken, UserController.delelteById);
+
+// Account & Security routes (require authentication and user authorization)
+router.get("/:id/profile", authenticateToken, authorizeUser, UserController.getProfile);
+router.patch("/:id/account-info", authenticateToken, authorizeUser, UserController.updateAccountInfo);
+router.patch("/:id/change-password", authenticateToken, authorizeUser, UserController.changePassword);
+router.post("/:id/validate-password", authenticateToken, authorizeUser, UserController.validateCurrentPassword);
+
+export { router as userRouter };
 
 

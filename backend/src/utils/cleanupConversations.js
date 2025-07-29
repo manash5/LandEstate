@@ -1,5 +1,6 @@
 import { Conversation, Message, User } from '../models/index.js';
 import { Op } from 'sequelize';
+import { sequelize } from '../database/index.js';
 
 /**
  * Clean up duplicate conversations in the database
@@ -7,6 +8,10 @@ import { Op } from 'sequelize';
 export const cleanupDuplicateConversations = async () => {
     try {
         console.log('Starting cleanup of duplicate conversations...');
+        
+        // Test database connection
+        await sequelize.authenticate();
+        console.log('Database connection successful');
         
         // Find all conversations
         const allConversations = await Conversation.findAll({
@@ -40,6 +45,8 @@ export const cleanupDuplicateConversations = async () => {
             conversationGroups[key].push(conv);
         });
 
+        console.log(`Found ${Object.keys(conversationGroups).length} unique user pairs`);
+
         // Find and remove duplicates
         let duplicatesRemoved = 0;
         
@@ -60,21 +67,25 @@ export const cleanupDuplicateConversations = async () => {
                     return new Date(best.lastMessageTime) > new Date(current.lastMessageTime) ? best : current;
                 });
 
+                console.log(`Keeping conversation ${conversationToKeep.id}, removing ${conversations.length - 1} duplicates`);
+
                 // Remove the duplicates
                 const duplicatesToRemove = conversations.filter(conv => conv.id !== conversationToKeep.id);
                 
                 for (const duplicate of duplicatesToRemove) {
                     // First, move any messages from duplicate conversation to the one we're keeping
-                    await Message.update(
+                    const messagesMoved = await Message.update(
                         { conversationId: conversationToKeep.id },
                         { where: { conversationId: duplicate.id } }
                     );
+                    
+                    console.log(`Moved ${messagesMoved[0]} messages from conversation ${duplicate.id} to ${conversationToKeep.id}`);
                     
                     // Then delete the duplicate conversation
                     await Conversation.destroy({ where: { id: duplicate.id } });
                     duplicatesRemoved++;
                     
-                    console.log(`Removed duplicate conversation ${duplicate.id}, moved messages to ${conversationToKeep.id}`);
+                    console.log(`Removed duplicate conversation ${duplicate.id}`);
                 }
             }
         }
@@ -97,14 +108,13 @@ export const cleanupDuplicateConversations = async () => {
 };
 
 // Export for manual execution
-if (import.meta.url === `file://${process.argv[1]}`) {
-    cleanupDuplicateConversations()
-        .then(result => {
-            console.log('Cleanup result:', result);
-            process.exit(0);
-        })
-        .catch(error => {
-            console.error('Cleanup failed:', error);
-            process.exit(1);
-        });
-}
+console.log('Script starting...');
+cleanupDuplicateConversations()
+    .then(result => {
+        console.log('Cleanup result:', result);
+        process.exit(0);
+    })
+    .catch(error => {
+        console.error('Cleanup failed:', error);
+        process.exit(1);
+    });

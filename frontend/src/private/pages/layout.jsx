@@ -3,7 +3,7 @@ import Dashboard from '../components/dashboard';
 import Properties from '../components/properties';
 import MyListing from '../components/MyListing';
 import Profile from '../components/Profile';
-import Sidebar from '../components/Sidebar';
+import Sidebar from '../components/sidebar';
 import Message from '../components/message';
 import Setting from '../components/settings';
 import Analyze from '../components/Analyze';
