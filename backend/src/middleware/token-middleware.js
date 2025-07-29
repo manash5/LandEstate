@@ -4,22 +4,35 @@ dotenv.config();
 
 // Middleware to verify JWT token
 export function authenticateToken(req, res, next) {
-  console.log('AuthenticateToken middleware called for path:', req.path);
-  console.log('Full URL:', req.url);
+  console.log('🔍 AuthenticateToken middleware called');
+  console.log('Path:', req.path);
+  console.log('Original URL:', req.originalUrl);
   console.log('Method:', req.method);
   
-  // Skip token verification for public auth routes
-  const publicPaths = [
-    "/api/auth/login",
-    "/api/register", 
-    "/api/auth/forgot-password",
-    "/api/auth/reset-password",
+  // List of endpoints that should skip authentication
+  const publicEndpoints = [
+    '/api/auth/login',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/register'
   ];
   
-  const isPublicPath = publicPaths.includes(req.path) || req.path.startsWith('/api/auth/verify-reset-token/');
+  // Check if this is a public endpoint
+  const isPublicEndpoint = publicEndpoints.some(endpoint => 
+    req.originalUrl === endpoint || req.path === endpoint
+  );
   
-  if (isPublicPath) {
-    console.log('✅ Skipping authentication for:', req.path);
+  // Also check for verify token endpoint (with parameters)
+  const isVerifyToken = req.originalUrl.startsWith('/api/auth/verify-reset-token/') || 
+                       req.path.startsWith('/api/auth/verify-reset-token/') ||
+                       req.originalUrl.includes('/api/auth/verify-reset-token/') ||
+                       req.path.includes('/api/auth/verify-reset-token/');
+  
+  console.log('isPublicEndpoint:', isPublicEndpoint);
+  console.log('isVerifyToken:', isVerifyToken);
+  
+  if (isPublicEndpoint || isVerifyToken) {
+    console.log('✅ SKIPPING authentication for:', req.originalUrl);
     return next();
   }
 

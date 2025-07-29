@@ -109,7 +109,7 @@ export function sendWelcomeEmail(userEmail, userName) {
 
 // Send password reset email
 export function sendPasswordResetEmail(userEmail, resetToken) {
-  const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+  const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
   
   return transporter.sendMail({
     from: 'security@landestate.com',

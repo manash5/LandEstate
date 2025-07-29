@@ -51,3 +51,17 @@ export const getCurrentUser = () => {
     }
   });
 };
+
+// Update user profile image
+export const updateProfileImage = (userId, imageFile) => {
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+  formData.append('profileImage', imageFile);
+  
+  return axios.post(`http://localhost:4000/api/users/${userId}/profile-image`, formData, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+};

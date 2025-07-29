@@ -2,20 +2,22 @@ import { User } from "../../models/index.js";
 import { generateToken } from "../../security/jwt-util.js";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { Op } from "sequelize";
 import { sendLoginNotification, sendPasswordResetEmail } from "../../utils/sendMail.js";
 
 const login = async (req, res) => {
   try {
     //fetching all the data from users table
     if (req.body.email == null) {
-      return res.status(500).send({ message: "email is required" });
+      return res.status(400).send({ message: "Email is required" });
     }
     if (req.body.password == null) {
-      return res.status(500).send({ message: "password is required" });
+      return res.status(400).send({ message: "Password is required" });
     }
+    
     const user = await User.findOne({ where: { email: req.body.email } });
     if (!user) {
-      return res.status(500).send({ message: "user not found" });
+      return res.status(404).send({ message: "No account found with this email address" });
     }
     
     // Compare password using bcrypt
@@ -28,14 +30,14 @@ const login = async (req, res) => {
       });
       return res.status(200).send({
         data: { access_token: token },
-        message: "successfully logged in",
+        message: "Successfully logged in",
       });
     } else {
-      return res.status(401).send({ message: "Invalid password" });
+      return res.status(401).send({ message: "Incorrect password" });
     }
   } catch (e) {
-    console.log(e);
-    res.status(500).json({ error: "Failed to login" });
+    console.error('Login error:', e);
+    res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
 
@@ -101,15 +103,21 @@ const forgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
     
+    console.log('Generated reset token:', resetToken);
+    console.log('Token expiry:', resetTokenExpiry);
+    
     // Save reset token to user
     await user.update({
       resetPasswordToken: resetToken,
       resetPasswordExpires: resetTokenExpiry
     });
     
+    console.log('Token saved to user:', user.id);
+    
     // Send password reset email
     try {
       await sendPasswordResetEmail(user.email, resetToken);
+      console.log('Password reset email sent successfully');
       return res.status(200).send({ 
         message: "Password reset email sent successfully" 
       });
@@ -146,7 +154,7 @@ const resetPassword = async (req, res) => {
       where: {
         resetPasswordToken: token,
         resetPasswordExpires: {
-          [require('sequelize').Op.gt]: new Date()
+          [Op.gt]: new Date()
         }
       }
     });
@@ -270,7 +278,7 @@ const resetPasswordForm = async (req, res) => {
             <div class="error">
               <h2>❌ Invalid or Expired Link</h2>
               <p>This password reset link is invalid or has expired. Please request a new password reset.</p>
-              <a href="http://localhost:3000/forgotpass" class="button">Request New Reset</a>
+              <a href="http://localhost:5173/forgotpass" class="button">Request New Reset</a>
             </div>
           </body>
         </html>
@@ -304,7 +312,7 @@ const resetPasswordForm = async (req, res) => {
             <h2>✅ Password Reset Successful!</h2>
             <p>Your password has been successfully updated. You can now log in with your new password.</p>
             <p><strong>Email:</strong> ${user.email}</p>
-            <a href="http://localhost:3000/login" class="button">Go to Login</a>
+            <a href="http://localhost:5173/login" class="button">Go to Login</a>
           </div>
         </body>
       </html>
@@ -339,7 +347,10 @@ const verifyResetToken = async (req, res) => {
   try {
     const { token } = req.params;
     
+    console.log('Verifying reset token:', token);
+    
     if (!token) {
+      console.log('No token provided');
       return res.status(400).send({ message: "Token is required" });
     }
     
@@ -348,15 +359,24 @@ const verifyResetToken = async (req, res) => {
       where: {
         resetPasswordToken: token,
         resetPasswordExpires: {
-          [require('sequelize').Op.gt]: new Date()
+          [Op.gt]: new Date()
         }
       }
     });
     
+    console.log('User found with token:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('User email:', user.email);
+      console.log('Token expires at:', user.resetPasswordExpires);
+      console.log('Current time:', new Date());
+    }
+    
     if (!user) {
+      console.log('Invalid or expired token');
       return res.status(400).send({ message: "Invalid or expired reset token" });
     }
     
+    console.log('Token is valid, returning success');
     return res.status(200).send({ 
       message: "Token is valid",
       email: user.email 

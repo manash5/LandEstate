@@ -20,9 +20,14 @@ const ResetPassword = () => {
     const token = searchParams.get('token');
     const password = watch('password');
 
+    console.log('ResetPassword component loaded');
+    console.log('Token from URL:', token);
+
     useEffect(() => {
+        console.log('useEffect running, checking token...');
         const checkToken = async () => {
             if (!token) {
+                console.log('No token found in URL');
                 toast.error('Invalid reset link', {
                     position: "bottom-right",
                     theme: "dark",
@@ -33,7 +38,9 @@ const ResetPassword = () => {
             }
 
             try {
+                console.log('Verifying token:', token);
                 const response = await verifyResetToken(token);
+                console.log('Token verification response:', response);
                 setIsValidToken(true);
                 setUserEmail(response.data.email);
                 setIsLoading(false);

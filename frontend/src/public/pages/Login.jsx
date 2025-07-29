@@ -44,11 +44,39 @@ const Login = () => {
                 });
               }
             } catch (error) {
-              toast.error('Registration failed! Server error.', {
-                position: "bottom-right",
-                theme: "dark",
-                transition: Bounce,
-              });
+              console.log('Login error:', error);
+              
+              // Check if it's a network/response error with status
+              if (error.response && error.response.status) {
+                const status = error.response.status;
+                const message = error.response.data?.message || 'Login failed!';
+                
+                if (status === 404) {
+                  toast.error('No account found with this email address', {
+                    position: "bottom-right",
+                    theme: "dark",
+                    transition: Bounce,
+                  });
+                } else if (status === 401) {
+                  toast.error('Incorrect password', {
+                    position: "bottom-right",
+                    theme: "dark",
+                    transition: Bounce,
+                  });
+                } else {
+                  toast.error(message, {
+                    position: "bottom-right",
+                    theme: "dark",
+                    transition: Bounce,
+                  });
+                }
+              } else {
+                toast.error('Login failed! Server error.', {
+                  position: "bottom-right",
+                  theme: "dark",
+                  transition: Bounce,
+                });
+              }
             } finally {
               setIsLoading(false);
             }

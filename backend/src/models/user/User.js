@@ -27,6 +27,10 @@ export const User=sequelize.define("User",{
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      profileImage: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       resetPasswordToken: {
         type: DataTypes.STRING,
         allowNull: true,

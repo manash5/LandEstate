@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Camera, MapPin, Phone, Mail, MoreHorizontal, ChevronRight, Edit3, Shield, Calendar } from 'lucide-react';
-import { getCurrentUser, fetchUserProperties } from '../../services/api';
+import { getCurrentUser, fetchUserProperties, updateProfileImage } from '../../services/api';
+import { ToastContainer, toast, Bounce } from 'react-toastify';
 
 const Profile = () => {
   const [activeFilter, setActiveFilter] = useState('Popular');
@@ -8,6 +9,9 @@ const Profile = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const fileInputRef = useRef(null);
   
   const filters = ['Popular', 'Recommended', 'Newest', 'Most Recent'];
 
@@ -36,6 +40,124 @@ const Profile = () => {
     const formattedDate = `${year}-${month}-${day}`;
     console.log('Formatted date:', formattedDate);
     return formattedDate;
+  };
+
+  // Handle camera button click
+  const handleCameraClick = () => {
+    if (imageLoading) return; // Prevent clicks during upload
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+      return;
+    }
+
+    if (!user || !user.id) {
+      toast.error('User not found. Please try again.', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+      return;
+    }
+
+    try {
+      setImageLoading(true);
+      
+      // Upload image to backend
+      const response = await updateProfileImage(user.id, file);
+      
+      if (response.data && response.data.imagePath) {
+        // Update user state with new profile image
+        const updatedUser = { ...user, profileImage: response.data.imagePath };
+        setUser(updatedUser);
+        
+        // Create preview URL for immediate display
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setProfileImage(e.target.result);
+        };
+        reader.readAsDataURL(file);
+        
+        toast.success('Profile image updated successfully!', {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+          transition: Bounce,
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      toast.error('Failed to update profile image. Please try again.', {
+        position: "bottom-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "dark",
+        transition: Bounce,
+      });
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  // Get profile image source
+  const getProfileImageSrc = () => {
+    if (profileImage) {
+      return profileImage; // User uploaded image preview
+    }
+    if (user?.profileImage) {
+      // Check if it's a full URL or relative path
+      if (user.profileImage.startsWith('http')) {
+        return user.profileImage;
+      } else {
+        // Relative path from backend, prepend server URL
+        return `http://localhost:4000${user.profileImage}`;
+      }
+    }
+    return '/noimage.jpg'; // Default no image
   };
 
   // Fetch user information and properties
@@ -132,15 +254,39 @@ const Profile = () => {
                 <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-1 shadow-lg">
                   <div className="w-full h-full rounded-xl bg-white flex items-center justify-center relative overflow-hidden">
                     <img 
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face"
+                      src={getProfileImageSrc()}
                       alt="Profile"
                       className="w-20 h-20 rounded-lg object-cover"
+                      onError={(e) => {
+                        e.target.src = '/noimage.jpg';
+                      }}
                     />
                   </div>
                 </div>
-                <button className="absolute -bottom-1 -right-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-all duration-200">
-                  <Camera className="w-3 h-3 text-gray-600" />
+                <button 
+                  onClick={handleCameraClick}
+                  disabled={imageLoading}
+                  className={`absolute -bottom-1 -right-1 bg-white rounded-lg p-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-all duration-200 cursor-pointer ${
+                    imageLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  title={imageLoading ? "Uploading..." : "Change profile picture"}
+                >
+                  {imageLoading ? (
+                    <div className="w-3 h-3 border border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Camera className="w-3 h-3 text-gray-600" />
+                  )}
                 </button>
+                
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={imageLoading}
+                  className="hidden"
+                />
               </div>
               
               {/* Profile Info */}
@@ -299,6 +445,21 @@ const Profile = () => {
           )}
         </div>
       </div>
+      
+      {/* Toast Container */}
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
     </div>
   );
 };

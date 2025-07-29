@@ -65,6 +65,7 @@ const update = async (req, res) => {
         oldUser.email = body.email;
         oldUser.phone = body.phone || oldUser.phone;
         oldUser.address = body.address || oldUser.address;
+        oldUser.profileImage = body.profileImage || oldUser.profileImage;
         oldUser.save();
         res.status(201).send({ data: oldUser, message: "user updated successfully" })
     } catch (e) {
@@ -110,11 +111,45 @@ const getById = async (req, res) => {
     }
 }
 
+/**
+ *  update user profile image
+ */
+const updateProfileImage = async (req, res) => {
+    try {
+        const { id = null } = req.params;
+        
+        if (!req.file) {
+            return res.status(400).send({ message: "No file uploaded" });
+        }
+
+        // Check if user exists
+        const user = await User.findOne({ where: { id } });
+        if (!user) {
+            return res.status(404).send({ message: "User not found" });
+        }
+
+        // Update profile image path
+        const imagePath = `/uploads/${req.file.filename}`;
+        user.profileImage = imagePath;
+        await user.save();
+
+        res.status(200).send({ 
+            data: user, 
+            message: "Profile image updated successfully",
+            imagePath: imagePath
+        });
+    } catch (e) {
+        console.log(e);
+        res.status(500).json({ error: 'Failed to update profile image' });
+    }
+}
+
 
 export const UserController = {
     getAll,
     create,
     getById,
     delelteById,
-    update
+    update,
+    updateProfileImage
 }
