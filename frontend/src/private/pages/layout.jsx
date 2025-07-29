@@ -52,6 +52,9 @@ const Layout = () => {
     if (location.state?.showAnalyze) {
       setActiveTab('Analyze');
       setCurrentComponent(renderComponent('Analyze'));
+    } else if (location.state?.showMessage) {
+      setActiveTab('Message');
+      setCurrentComponent(renderComponent('Message'));
     }
   }, [location.state]);
 

@@ -275,9 +275,13 @@ const startConversation = async (req, res) => {
         });
 
         if (!conversation) {
+            // Always store user IDs in consistent order (smaller ID as user1, larger as user2)
+            const smallerId = Math.min(currentUserId, userId);
+            const largerId = Math.max(currentUserId, userId);
+            
             conversation = await Conversation.create({
-                user1Id: Math.min(currentUserId, userId),
-                user2Id: Math.max(currentUserId, userId),
+                user1Id: smallerId,
+                user2Id: largerId,
                 lastMessageTime: new Date()
             });
 

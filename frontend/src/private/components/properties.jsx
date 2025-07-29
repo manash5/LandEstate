@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AddPropertyModal from "./AddPropertyModel";
 import { useForm } from "react-hook-form";
 import { Home, Building, Users, Star, Settings, Bell, Search, MapPin, Bed, Bath, Square, Wifi, Car, Utensils, Wind, Phone, MessageCircle, ArrowLeft, ChevronDown, Filter, Plus, X } from 'lucide-react';
-import { fetchProperties } from '../../services/api';
+import { fetchProperties, getUsersById } from '../../services/api';
+import { useMessage } from '../../context/MessageContext';
 
 const Properties = () => {
+  const navigate = useNavigate();
+  const { openChatWithUser } = useMessage();
   const [currentView, setCurrentView] = useState('list'); // 'list' or 'details'
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [activeTab, setActiveTab] = useState('property');
@@ -235,9 +239,37 @@ const Properties = () => {
       });
   };
 
-  const handleChatClick = (agent) => {
-    // For now, just show an alert. You can implement actual chat functionality later
-    alert(`Starting chat with ${agent.name} (${agent.phone})`);
+  const handleChatClick = async (agent) => {
+    try {
+      // Get the agent's user ID
+      let userId = null;
+      
+      // For database properties, we have the user info in the agent object
+      if (agent.id) {
+        userId = agent.id;
+      } else if (agent.email && agent.email !== 'No email available') {
+        // For mock properties, we need to find the user by email
+        // This is a fallback - in a real app, you'd have the user ID directly
+        console.log('Agent info:', agent);
+        // Navigate to layout with message state
+        navigate('/layout', { state: { showMessage: true } });
+        return;
+      }
+      
+      if (userId) {
+        // Open chat with specific user using context
+        openChatWithUser(userId);
+        // Navigate to layout and show message section
+        navigate('/layout', { state: { showMessage: true } });
+      } else {
+        // Navigate to layout with message state
+        navigate('/layout', { state: { showMessage: true } });
+      }
+    } catch (error) {
+      console.error('Failed to start chat:', error);
+      // Still navigate to layout with message state as fallback
+      navigate('/layout', { state: { showMessage: true } });
+    }
   };
 
   const PropertyCard = ({ property }) => (
@@ -312,6 +344,7 @@ const Properties = () => {
     description: property.description || '',
     priceDuration: property.priceDuration, // Add priceDuration for filtering
     agent: {
+      id: property.user?.id, // Add user ID for chat navigation
       name: property.user?.name || 'Unknown Agent',
       role: 'Property Agent',
       location: property.location,

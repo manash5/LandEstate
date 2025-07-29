@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Paperclip, Smile, Send, ChevronDown, Plus, User, ArrowLeft } from 'lucide-react';
-import { getConversations, getMessages, sendMessage, searchUsers, startConversation, getCurrentUser } from '../../services/api';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Search, Paperclip, Smile, Send, ChevronDown, Plus, User, ArrowLeft, MessageCircle } from 'lucide-react';
+import { getConversations, getMessages, sendMessage, searchUsers, startConversation, getCurrentUser, getUsersById } from '../../services/api';
 import { toast } from 'react-toastify';
+import { useMessage } from '../../context/MessageContext';
 
 const Message = () => {
+  const { userId } = useParams(); // Get user ID from URL parameters (for backward compatibility)
+  const navigate = useNavigate();
+  const { targetUserId, shouldOpenChat, clearChatTarget } = useMessage();
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messageInput, setMessageInput] = useState('');
   const [conversations, setConversations] = useState([]);
@@ -14,6 +19,7 @@ const Message = () => {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Fetch current user
@@ -37,6 +43,31 @@ const Message = () => {
     fetchConversations();
   }, []);
 
+  // Handle URL parameter for starting conversation with specific user (backward compatibility)
+  useEffect(() => {
+    if (userId && currentUser) {
+      handleStartConversationWithUserId(userId);
+    }
+  }, [userId, currentUser]);
+
+  // Handle context-triggered chat opening - wait for conversations to load
+  useEffect(() => {
+    if (shouldOpenChat && targetUserId && currentUser && conversations.length >= 0) {
+      console.log('Context triggered chat opening for user:', targetUserId); // Debug log
+      console.log('Available conversations:', conversations); // Debug log
+      
+      // Add a small delay to ensure conversations are fully loaded
+      const timer = setTimeout(() => {
+        handleStartConversationWithUserId(targetUserId);
+        if (clearChatTarget) {
+          clearChatTarget(); // Clear the target after handling
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [shouldOpenChat, targetUserId, currentUser, conversations]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
@@ -51,11 +82,30 @@ const Message = () => {
       setLoading(true);
       const response = await getConversations();
       if (response.data?.data) {
-        setConversations(response.data.data);
-        // Select first conversation if none selected
-        if (!selectedConversation && response.data.data.length > 0) {
-          handleConversationSelect(response.data.data[0]);
-        }
+        // Remove any duplicate conversations based on otherUser.id
+        const uniqueConversations = response.data.data.reduce((acc, current) => {
+          const existingIndex = acc.findIndex(conv => conv.otherUser.id === current.otherUser.id);
+          if (existingIndex === -1) {
+            acc.push(current);
+          } else {
+            // Keep the conversation with the most recent lastMessageTime
+            if (new Date(current.lastMessageTime || current.updatedAt) > new Date(acc[existingIndex].lastMessageTime || acc[existingIndex].updatedAt)) {
+              acc[existingIndex] = current;
+            }
+          }
+          return acc;
+        }, []);
+        
+        // Sort by lastMessageTime (most recent first)
+        const sortedConversations = uniqueConversations.sort((a, b) => {
+          const aTime = new Date(a.lastMessageTime || a.updatedAt);
+          const bTime = new Date(b.lastMessageTime || b.updatedAt);
+          return bTime - aTime;
+        });
+        
+        setConversations(sortedConversations);
+        console.log('Fetched and deduplicated conversations:', sortedConversations); // Debug log
+        // Don't auto-select first conversation to avoid confusion
       }
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
@@ -67,17 +117,27 @@ const Message = () => {
 
   const fetchMessages = async (conversationId) => {
     try {
+      setLoadingMessages(true);
+      console.log('Fetching messages for conversation:', conversationId); // Debug log
       const response = await getMessages(conversationId);
       if (response.data?.data) {
+        console.log('Fetched messages:', response.data.data); // Debug log
         setMessages(response.data.data);
+      } else {
+        console.log('No messages found or empty response'); // Debug log
+        setMessages([]);
       }
     } catch (error) {
       console.error('Failed to fetch messages:', error);
       toast.error('Failed to load messages');
+      setMessages([]);
+    } finally {
+      setLoadingMessages(false);
     }
   };
 
   const handleConversationSelect = (conversation) => {
+    console.log('Selecting conversation:', conversation); // Debug log
     setSelectedConversation(conversation);
     fetchMessages(conversation.id);
     setShowSearchResults(false);
@@ -96,14 +156,30 @@ const Message = () => {
         // Add the new message to the current messages
         setMessages(prev => [...prev, response.data.data]);
         
-        // Update the conversation's last message
-        setConversations(prev => 
-          prev.map(conv => 
+        // Update the conversation's last message and refresh conversations
+        setConversations(prev => {
+          const updated = prev.map(conv => 
             conv.id === selectedConversation.id 
               ? { ...conv, lastMessage: response.data.data, lastMessageTime: response.data.data.createdAt }
               : conv
-          )
-        );
+          );
+          
+          // Remove any duplicates by otherUser.id and sort by lastMessageTime
+          const uniqueConversations = updated.reduce((acc, current) => {
+            const existingIndex = acc.findIndex(conv => conv.otherUser.id === current.otherUser.id);
+            if (existingIndex === -1) {
+              acc.push(current);
+            } else {
+              // Keep the conversation with the most recent lastMessageTime
+              if (new Date(current.lastMessageTime) > new Date(acc[existingIndex].lastMessageTime)) {
+                acc[existingIndex] = current;
+              }
+            }
+            return acc;
+          }, []);
+          
+          return uniqueConversations.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
+        });
         
         // Update selected conversation
         setSelectedConversation(prev => ({
@@ -111,6 +187,11 @@ const Message = () => {
           lastMessage: response.data.data,
           lastMessageTime: response.data.data.createdAt
         }));
+        
+        // Refresh conversations to get updated order
+        setTimeout(() => {
+          fetchConversations();
+        }, 200);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -133,7 +214,9 @@ const Message = () => {
       setIsSearching(true);
       const response = await searchUsers(query);
       if (response.data?.data) {
-        setSearchResults(response.data.data);
+        // Filter out current user from search results
+        const filteredResults = response.data.data.filter(user => user.id !== currentUser?.id);
+        setSearchResults(filteredResults);
         setShowSearchResults(true);
       }
     } catch (error) {
@@ -146,14 +229,38 @@ const Message = () => {
 
   const handleStartConversation = async (user) => {
     try {
+      console.log('Starting conversation with user:', user); // Debug log
+      
+      // First check if conversation already exists
+      const existingConversation = conversations.find(conv => 
+        conv.otherUser.id === user.id
+      );
+      
+      if (existingConversation) {
+        console.log('Found existing conversation with user:', existingConversation); // Debug log
+        handleConversationSelect(existingConversation);
+        setShowSearchResults(false);
+        setSearchQuery('');
+        return;
+      }
+
+      console.log('Creating new conversation with user'); // Debug log
       const response = await startConversation(user.id);
       if (response.data?.data) {
-        // Add or update conversation in the list
-        setConversations(prev => {
-          const existing = prev.find(conv => conv.id === response.data.data.id);
-          if (existing) return prev;
-          return [response.data.data, ...prev];
-        });
+        console.log('Created conversation:', response.data.data); // Debug log
+        
+        // Check if this conversation already exists in our list (by other user ID)
+        const duplicateCheck = conversations.find(conv => 
+          conv.otherUser.id === response.data.data.otherUser.id
+        );
+        
+        if (!duplicateCheck) {
+          // Add conversation to the list only if it doesn't exist
+          setConversations(prev => [response.data.data, ...prev]);
+          console.log('Added new conversation to list'); // Debug log
+        } else {
+          console.log('Conversation already exists, not adding duplicate'); // Debug log
+        }
         
         // Select the conversation
         handleConversationSelect(response.data.data);
@@ -162,6 +269,51 @@ const Message = () => {
       }
     } catch (error) {
       console.error('Failed to start conversation:', error);
+      toast.error('Failed to start conversation');
+    }
+  };
+
+  // Function to handle starting conversation with user ID from URL or context
+  const handleStartConversationWithUserId = async (targetUserId) => {
+    try {
+      console.log('Starting conversation with user ID:', targetUserId); // Debug log
+      console.log('Current conversations:', conversations); // Debug log
+      
+      // First check if conversation already exists
+      const existingConversation = conversations.find(conv => 
+        conv.otherUser.id === parseInt(targetUserId)
+      );
+      
+      if (existingConversation) {
+        console.log('Found existing conversation:', existingConversation); // Debug log
+        handleConversationSelect(existingConversation);
+        return;
+      }
+
+      console.log('No existing conversation found, creating new one'); // Debug log
+      // If no existing conversation, start a new one
+      const response = await startConversation(parseInt(targetUserId));
+      if (response.data?.data) {
+        console.log('Created new conversation:', response.data.data); // Debug log
+        
+        // Check if this conversation already exists in our list (by other user ID)
+        const duplicateCheck = conversations.find(conv => 
+          conv.otherUser.id === response.data.data.otherUser.id
+        );
+        
+        if (!duplicateCheck) {
+          // Add conversation to the list only if it doesn't exist
+          setConversations(prev => [response.data.data, ...prev]);
+          console.log('Added new conversation to list'); // Debug log
+        } else {
+          console.log('Conversation already exists, not adding duplicate'); // Debug log
+        }
+        
+        // Select the conversation
+        handleConversationSelect(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to start conversation with user:', error);
       toast.error('Failed to start conversation');
     }
   };
@@ -350,32 +502,46 @@ const Message = () => {
                     </span>
                   </div>
                   
-                  {messages.map((msg) => {
-                    const isSent = msg.senderId === currentUser?.id;
-                    return (
-                      <div key={msg.id} className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}>
-                        {!isSent && (
-                          <div className="w-6 h-6 rounded-full overflow-hidden mr-1.5 mt-auto ring-2 ring-white/50 shadow-sm">
-                            <img 
-                              src={getProfileImageUrl(selectedConversation.otherUser)} 
-                              alt={selectedConversation.otherUser.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className={`max-w-xs px-3 py-2 rounded-2xl backdrop-blur-sm transition-all duration-200 hover:shadow-lg ${
-                          isSent 
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md' 
-                            : 'bg-white/80 text-gray-800 border border-gray-200/30 shadow-md'
-                        }`}>
-                          <p className={`text-xs leading-relaxed ${isSent ? 'text-white' : 'text-gray-800'}`}>{msg.content}</p>
-                          <div className={`text-xs mt-1.5 ${isSent ? 'text-white opacity-80' : 'text-gray-500'}`}>
-                            {formatTime(msg.createdAt)}
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="text-gray-500">Loading messages...</div>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="text-center text-gray-500">
+                        <MessageCircle className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                        <p>No messages yet</p>
+                        <p className="text-xs mt-1">Start the conversation!</p>
+                      </div>
+                    </div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isSent = msg.senderId === currentUser?.id;
+                      return (
+                        <div key={msg.id} className={`flex ${isSent ? 'justify-end' : 'justify-start'}`}>
+                          {!isSent && (
+                            <div className="w-6 h-6 rounded-full overflow-hidden mr-1.5 mt-auto ring-2 ring-white/50 shadow-sm">
+                              <img 
+                                src={getProfileImageUrl(selectedConversation.otherUser)} 
+                                alt={selectedConversation.otherUser.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className={`max-w-xs px-3 py-2 rounded-2xl backdrop-blur-sm transition-all duration-200 hover:shadow-lg ${
+                            isSent 
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-md' 
+                              : 'bg-white/80 text-gray-800 border border-gray-200/30 shadow-md'
+                          }`}>
+                            <p className={`text-xs leading-relaxed ${isSent ? 'text-white' : 'text-gray-800'}`}>{msg.content}</p>
+                            <div className={`text-xs mt-1.5 ${isSent ? 'text-white opacity-80' : 'text-gray-500'}`}>
+                              {formatTime(msg.createdAt)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
 

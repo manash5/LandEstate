@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Layout from '../../public/pages/Layout';
 import Login from '../../public/pages/Login'
 import { ThemeProvider } from '../../context/ThemeContext';
+import { MessageProvider } from '../../context/MessageContext';
 import Register from '../../public/pages/Register';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Dashboard from '../../private/components/dashboard';
@@ -17,31 +18,33 @@ import EmployeeLayout from '../employee/pages/layout'
 import EmployeeLogin from '../../public/pages/EmployeeLogin';
 import ForgotPass from '../../public/pages/ForgotPass';
 import ResetPassword from '../../public/pages/ResetPassword';
+import Message from '../components/message';
 
 const AppRoutes = () => {
   return (
     <ThemeProvider>
-      <Routes>
-        {/* Landing page without layout/navbar */}
-        <Route path="/" element={<Layout />} />
-        <Route path ='/login' element={<Login/>}/>
-        <Route path ='/register' element={<Register/>}/>
-        <Route path ='/dashboard' element={<Dashboard/>}/>
-        <Route path = '/properties' element = {<Properties/>}/>
-        <Route path = '/table' element = {<Table/>}/>
-        <Route path = '/layout' element = {<Layout1/>}/>
-        <Route path = '/profile' element = {<Profile/>}/>
-        <Route path = '/settings' element = {<Settings/>}/>
-        <Route path = '/Test' element = {<Test/>}/>
-        <Route path="/property/:id" element={<NavigateClick />} />
-        <Route path = 'employee/layout' element = {<EmployeeLayout/>} />
-        <Route path = 'employee/login' element = {<EmployeeLogin/>} />
-        <Route path = '/forgotpass' element = {<ForgotPass/>} />
-        <Route path = '/reset-password' element = {<ResetPassword/>} />
-
-
-        
-      </Routes>
+      <MessageProvider>
+        <Routes>
+          {/* Landing page without layout/navbar */}
+          <Route path="/" element={<Layout />} />
+          <Route path ='/login' element={<Login/>}/>
+          <Route path ='/register' element={<Register/>}/>
+          <Route path ='/dashboard' element={<Dashboard/>}/>
+          <Route path = '/properties' element = {<Properties/>}/>
+          <Route path = '/table' element = {<Table/>}/>
+          <Route path = '/layout' element = {<Layout1/>}/>
+          <Route path = '/profile' element = {<Profile/>}/>
+          <Route path = '/settings' element = {<Settings/>}/>
+          <Route path = '/messages' element = {<Message/>}/>
+          <Route path = '/messages/:userId' element = {<Message/>}/>
+          <Route path = '/Test' element = {<Test/>}/>
+          <Route path="/property/:id" element={<NavigateClick />} />
+          <Route path = 'employee/layout' element = {<EmployeeLayout/>} />
+          <Route path = 'employee/login' element = {<EmployeeLogin/>} />
+          <Route path = '/forgotpass' element = {<ForgotPass/>} />
+          <Route path = '/reset-password' element = {<ResetPassword/>} />
+        </Routes>
+      </MessageProvider>
     </ThemeProvider>
   )
 }
