@@ -124,3 +124,74 @@ export const startConversation = (userId) => {
     }
   });
 };
+
+// Employee API functions
+const EMPLOYEE_API = 'http://localhost:4000/api/employees';
+
+// Create a new employee
+export const createEmployee = (employeeData) => {
+  const token = localStorage.getItem('token');
+  return axios.post(EMPLOYEE_API, employeeData, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Get all employees for the current manager
+export const getEmployees = () => {
+  const token = localStorage.getItem('token');
+  return axios.get(EMPLOYEE_API, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Get employee by ID
+export const getEmployeeById = (employeeId) => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${EMPLOYEE_API}/${employeeId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Update employee
+export const updateEmployee = (employeeId, employeeData) => {
+  const token = localStorage.getItem('token');
+  return axios.put(`${EMPLOYEE_API}/${employeeId}`, employeeData, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Delete employee
+export const deleteEmployee = (employeeId) => {
+  const token = localStorage.getItem('token');
+  return axios.delete(`${EMPLOYEE_API}/${employeeId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Employee Authentication API
+const EMPLOYEE_AUTH_API = 'http://localhost:4000/api/employee-auth';
+
+// Employee login
+export const employeeLogin = (credentials) => {
+  return axios.post(`${EMPLOYEE_AUTH_API}/login`, credentials);
+};
+
+// Get current employee
+export const getCurrentEmployee = () => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${EMPLOYEE_AUTH_API}/current`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};

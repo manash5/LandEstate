@@ -4,19 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Lock, 
-  Bell, 
-  CreditCard, 
-  Home, 
-  Shield, 
-  Mail, 
-  Phone, 
+  Users,
   Eye, 
   EyeOff, 
   Save, 
   Settings,
-  LogOut
+  LogOut,
+  Plus,
+  Edit,
+  Trash2,
+  Mail,
+  Phone
 } from 'lucide-react';
-import { getCurrentUser } from '../../services/api';
+import { getCurrentUser, createEmployee, getEmployees, updateEmployee, deleteEmployee } from '../../services/api';
 
 const settings = () => {
   const [activeTab, setActiveTab] = useState('account');
@@ -24,6 +24,15 @@ const settings = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [employees, setEmployees] = useState([]);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [employeeFormData, setEmployeeFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: ''
+  });
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -31,29 +40,12 @@ const settings = () => {
     phone: '',
     currentPassword: '',
     newPassword: '',
-    confirmPassword: '',
-    // Property Management Settings
-    autoRentReminders: true,
-    maintenanceAlerts: true,
-    propertyUpdates: true,
-    // Notification Settings
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    marketingEmails: false,
-    // Privacy Settings
-    profileVisibility: 'public',
-    showContactInfo: true,
-    allowMessages: true,
-    // Payment Settings
-    defaultPaymentMethod: 'card',
-    autoPayRent: false,
-    paymentReminders: true
+    confirmPassword: ''
   });
 
-  // Fetch user information
+  // Fetch user information and employees
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         const response = await getCurrentUser();
@@ -74,31 +66,119 @@ const settings = () => {
             phone: '' // Phone not available in current user model
           }));
         }
+
+        // Fetch employees
+        await fetchEmployees();
       } catch (err) {
-        console.error('Failed to fetch user:', err);
+        console.error('Failed to fetch data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUser();
+    fetchData();
   }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await getEmployees();
+      if (response.data?.success) {
+        setEmployees(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    }
+  };
 
   const tabs = [
     { id: 'account', label: 'Account', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
-    { id: 'property', label: 'Property Management', icon: Home },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'payments', label: 'Payments', icon: CreditCard },
-    { id: 'privacy', label: 'Privacy', icon: Shield }
+    { id: 'employees', label: 'Employee Management', icon: Users }
   ];
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleToggle = (field) => {
-    setFormData(prev => ({ ...prev, [field]: !prev[field] }));
+  const handleEmployeeInputChange = (field, value) => {
+    setEmployeeFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateEmployee = async () => {
+    try {
+      if (!employeeFormData.name || !employeeFormData.email || !employeeFormData.password) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const response = await createEmployee(employeeFormData);
+      if (response.data?.success) {
+        alert('Employee created successfully!');
+        setShowEmployeeModal(false);
+        setEmployeeFormData({
+          name: '',
+          email: '',
+          password: '',
+          phone: ''
+        });
+        fetchEmployees();
+      }
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      alert('Failed to create employee');
+    }
+  };
+
+  const handleEditEmployee = (employee) => {
+    setEditingEmployee(employee);
+    setEmployeeFormData({
+      name: employee.name,
+      email: employee.email,
+      password: '',
+      phone: employee.phone || ''
+    });
+    setShowEmployeeModal(true);
+  };
+
+  const handleUpdateEmployee = async () => {
+    try {
+      const updateData = { ...employeeFormData };
+      if (!updateData.password) {
+        delete updateData.password; // Don't update password if not provided
+      }
+
+      const response = await updateEmployee(editingEmployee.id, updateData);
+      if (response.data?.success) {
+        alert('Employee updated successfully!');
+        setShowEmployeeModal(false);
+        setEditingEmployee(null);
+        setEmployeeFormData({
+          name: '',
+          email: '',
+          password: '',
+          phone: ''
+        });
+        fetchEmployees();
+      }
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      alert('Failed to update employee');
+    }
+  };
+
+  const handleDeleteEmployee = async (employeeId) => {
+    if (window.confirm('Are you sure you want to delete this employee?')) {
+      try {
+        const response = await deleteEmployee(employeeId);
+        if (response.data?.success) {
+          alert('Employee deleted successfully!');
+          fetchEmployees();
+        }
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+        alert('Failed to delete employee');
+      }
+    }
   };
 
   const handleSave = () => {
@@ -253,198 +333,85 @@ const settings = () => {
     </div>
   );
 
-  const renderPropertySettings = () => (
+  const renderEmployeeSettings = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Home className="w-5 h-5 text-blue-900" />
-          Property Management
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Auto Rent Reminders</h4>
-              <p className="text-sm text-gray-600">Automatically send rent payment reminders to tenants</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.autoRentReminders}
-              onChange={() => handleToggle('autoRentReminders')}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Maintenance Alerts</h4>
-              <p className="text-sm text-gray-600">Get notified about property maintenance issues</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.maintenanceAlerts}
-              onChange={() => handleToggle('maintenanceAlerts')}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Property Update Notifications</h4>
-              <p className="text-sm text-gray-600">Receive updates about your listed properties</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.propertyUpdates}
-              onChange={() => handleToggle('propertyUpdates')}
-            />
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-900" />
+            Employee Management
+          </h3>
+          <button
+            onClick={() => setShowEmployeeModal(true)}
+            className="flex items-center gap-2 bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Employee
+          </button>
         </div>
-      </div>
-    </div>
-  );
-
-  const renderNotificationSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Bell className="w-5 h-5 text-blue-900" />
-          Notification Preferences
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Email Notifications</h4>
-              <p className="text-sm text-gray-600">Receive notifications via email</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.emailNotifications}
-              onChange={() => handleToggle('emailNotifications')}
-            />
+        
+        {employees.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No employees added yet</p>
+            <p className="text-sm text-gray-500">Create employee accounts to manage your team</p>
           </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">SMS Notifications</h4>
-              <p className="text-sm text-gray-600">Receive urgent notifications via SMS</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.smsNotifications}
-              onChange={() => handleToggle('smsNotifications')}
-            />
+        ) : (
+          <div className="space-y-4">
+            {employees.map((employee) => (
+              <div key={employee.id} className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="font-medium text-gray-900">{employee.name}</h4>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        employee.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {employee.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Mail className="w-4 h-4" />
+                        {employee.email}
+                      </div>
+                      {employee.phone && (
+                        <div className="flex items-center gap-1">
+                          <Phone className="w-4 h-4" />
+                          {employee.phone}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium">ID:</span> {employee.id}
+                      </div>
+                      <div>
+                        <span className="font-medium">Hired:</span> {new Date(employee.hireDate || employee.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditEmployee(employee)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      title="Edit Employee"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEmployee(employee.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      title="Delete Employee"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Push Notifications</h4>
-              <p className="text-sm text-gray-600">Receive push notifications in browser</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.pushNotifications}
-              onChange={() => handleToggle('pushNotifications')}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Marketing Emails</h4>
-              <p className="text-sm text-gray-600">Receive promotional and marketing emails</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.marketingEmails}
-              onChange={() => handleToggle('marketingEmails')}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderPaymentSettings = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-blue-900" />
-          Payment Settings
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Default Payment Method</label>
-            <select
-              value={formData.defaultPaymentMethod}
-              onChange={(e) => handleInputChange('defaultPaymentMethod', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-            >
-              <option value="card">Credit/Debit Card</option>
-              <option value="bank">Bank Transfer</option>
-              <option value="paypal">PayPal</option>
-              <option value="crypto">Cryptocurrency</option>
-            </select>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Auto-Pay Rent</h4>
-              <p className="text-sm text-gray-600">Automatically pay rent when due</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.autoPayRent}
-              onChange={() => handleToggle('autoPayRent')}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Payment Reminders</h4>
-              <p className="text-sm text-gray-600">Get reminded about upcoming payments</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.paymentReminders}
-              onChange={() => handleToggle('paymentReminders')}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderPrivacySettings = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-blue-900" />
-          Privacy Settings
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Profile Visibility</label>
-            <select
-              value={formData.profileVisibility}
-              onChange={(e) => handleInputChange('profileVisibility', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-            >
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-              <option value="verified-only">Verified Users Only</option>
-            </select>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Show Contact Information</h4>
-              <p className="text-sm text-gray-600">Display your contact info on your profile</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.showContactInfo}
-              onChange={() => handleToggle('showContactInfo')}
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Allow Direct Messages</h4>
-              <p className="text-sm text-gray-600">Allow other users to send you messages</p>
-            </div>
-            <ToggleSwitch 
-              checked={formData.allowMessages}
-              onChange={() => handleToggle('allowMessages')}
-            />
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -455,14 +422,8 @@ const settings = () => {
         return renderAccountSettings();
       case 'security':
         return renderSecuritySettings();
-      case 'property':
-        return renderPropertySettings();
-      case 'notifications':
-        return renderNotificationSettings();
-      case 'payments':
-        return renderPaymentSettings();
-      case 'privacy':
-        return renderPrivacySettings();
+      case 'employees':
+        return renderEmployeeSettings();
       default:
         return renderAccountSettings();
     }
@@ -470,6 +431,122 @@ const settings = () => {
 
   return (
     <div className="min-h-screen bg-slate-100">
+      {/* Employee Modal */}
+      {showEmployeeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">
+              {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={employeeFormData.name}
+                  onChange={(e) => setEmployeeFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={employeeFormData.email}
+                  onChange={(e) => setEmployeeFormData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={employeeFormData.phone}
+                  onChange={(e) => setEmployeeFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {!editingEmployee && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={employeeFormData.password}
+                    onChange={(e) => setEmployeeFormData(prev => ({ ...prev, password: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hire Date
+                </label>
+                <input
+                  type="date"
+                  name="hireDate"
+                  value={employeeFormData.hireDate}
+                  onChange={(e) => setEmployeeFormData(prev => ({ ...prev, hireDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={employeeFormData.isActive}
+                  onChange={(e) => setEmployeeFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label className="ml-2 block text-sm text-gray-700">
+                  Active Employee
+                </label>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEmployeeModal(false);
+                  setEditingEmployee(null);
+                  setEmployeeFormData({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    password: '',
+                    hireDate: '',
+                    isActive: true
+                  });
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEmployeeSubmit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                {editingEmployee ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">

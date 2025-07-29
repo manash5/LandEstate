@@ -2,6 +2,7 @@ import { User } from './user/User.js'
 import { Property } from './properties/properties.js'
 import { Conversation } from './message/Conversation.js'
 import { Message } from './message/Message.js'
+import { Employee } from './employee/Employee.js'
 
 // Define relationships
 User.hasMany(Property, { foreignKey: 'userId', as: 'properties' });
@@ -23,4 +24,4 @@ Message.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversatio
 
 Conversation.belongsTo(Message, { foreignKey: 'lastMessageId', as: 'lastMessage' });
 
-export { User, Property, Conversation, Message }
+export { User, Property, Conversation, Message, Employee }
