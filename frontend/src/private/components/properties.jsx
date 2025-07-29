@@ -80,11 +80,11 @@ const Properties = () => {
       facilities: ['Kitchen', 'Balcony', 'Wifi', 'Pool', 'Parking Area'],
       description: 'Elegant hotel apartment with premium facilities and exceptional service. Features modern architecture and world-class amenities for the discerning guest.',
       agent: {
-        name: 'Sarah Johnson',
-        location: 'Cundong City, USA',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-        phone: '+1 (555) 123-4567',
-        email: 'sarah.johnson@example.com',
+        name: 'David Thompson',
+        location: 'North Carolina, USA',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 567-8901',
+        email: 'david.thompson@example.com',
       }
     },
     {
@@ -106,11 +106,11 @@ const Properties = () => {
       facilities: ['Kitchen', 'Balcony', 'Wifi', 'Gym', 'Parking Area'],
       description: 'Contemporary apartment with breathtaking views and modern amenities. Perfect blend of luxury and comfort in a prime location.',
       agent: {
-        name: 'Michael Chen',
-        location: 'Margoluwin Catonya, USA',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-        phone: '+1 (555) 234-5678',
-        email: 'michael.chen@example.com',
+        name: 'David Thompson',
+        location: 'North Carolina, USA',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 567-8901',
+        email: 'david.thompson@example.com',
       }
     },
     {
@@ -132,11 +132,11 @@ const Properties = () => {
       facilities: ['Kitchen', 'Garden', 'Wifi', 'Parking Area'],
       description: 'Charming apartment with beautiful garden views and peaceful surroundings. Ideal for those seeking tranquility without compromising on modern conveniences.',
       agent: {
-        name: 'Emily Davis',
+        name: 'David Thompson',
         location: 'North Carolina, USA',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-        phone: '+1 (555) 345-6789',
-        email: 'emily.davis@example.com',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 567-8901',
+        email: 'david.thompson@example.com',
       }
     },
     {
@@ -158,11 +158,11 @@ const Properties = () => {
       facilities: ['Kitchen', 'Balcony', 'Wifi', 'Concierge', 'Parking Area'],
       description: 'Sophisticated hotel apartment with exceptional service and prime location. Features elegant interiors and comprehensive amenities for a luxurious stay.',
       agent: {
-        name: 'James Wilson',
-        location: 'Suryodiningratan, UK',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
-        phone: '+44 (0) 20 7123 4567',
-        email: 'james.wilson@example.com',
+       name: 'David Thompson',
+        location: 'North Carolina, USA',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 567-8901',
+        email: 'david.thompson@example.com',
       }
     },
     {
@@ -184,11 +184,11 @@ const Properties = () => {
       facilities: ['Kitchen', 'Spa', 'Wifi', 'Pool', 'Parking Area'],
       description: 'Luxury hotel with spa facilities and premium amenities. Perfect for relaxation and comfort with world-class service and stunning architectural design.',
       agent: {
-        name: 'Lisa Rodriguez',
+        name: 'David Thompson',
         location: 'North Carolina, USA',
-        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
-        phone: '+1 (555) 456-7890',
-        email: 'lisa.rodriguez@example.com',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+        phone: '+1 (555) 567-8901',
+        email: 'david.thompson@example.com',
       }
     }
   ];

@@ -1,3 +1,4 @@
 export * from './user/UserController.js'
 export * from './properties/PropertyController.js'
 export * from './auth/authController.js'
+export * from './message/MessageController.js'

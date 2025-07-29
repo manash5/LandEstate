@@ -8,6 +8,7 @@ import { authenticateToken } from "./middleware/token-middleware.js";
 import router from "./route/uploadRoutes.js";
 import { createUploadsFolder } from "./security/helper.js";
 import {propertyRouter} from './route/index.js'; 
+import { messageRouter } from './route/index.js';
 import { registerRouter } from "./route/register/registerRoute.js";
 import cors from 'cors'; 
 import path from 'path'; 
@@ -26,6 +27,7 @@ app.use("/api/register", registerRouter)
 app.use("/api/users", userRouter);
 app.use('/api/properties', propertyRouter)
 app.use("/api/auth", authRouter);
+app.use("/api/messages", messageRouter);
 app.use("/api/file", router);
 
 createUploadsFolder();

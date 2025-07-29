@@ -65,3 +65,62 @@ export const updateProfileImage = (userId, imageFile) => {
     }
   });
 };
+
+// Message API functions
+const MESSAGE_API = 'http://localhost:4000/api/messages';
+
+// Get all conversations for the current user
+export const getConversations = () => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${MESSAGE_API}/conversations`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Get messages for a specific conversation
+export const getMessages = (conversationId, page = 1, limit = 50) => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${MESSAGE_API}/conversations/${conversationId}/messages?page=${page}&limit=${limit}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Send a new message
+export const sendMessage = (receiverId, content, messageType = 'text') => {
+  const token = localStorage.getItem('token');
+  return axios.post(`${MESSAGE_API}/send`, {
+    receiverId,
+    content,
+    messageType
+  }, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Search users for starting new conversations
+export const searchUsers = (query) => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${MESSAGE_API}/search-users?query=${encodeURIComponent(query)}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Start a new conversation
+export const startConversation = (userId) => {
+  const token = localStorage.getItem('token');
+  return axios.post(`${MESSAGE_API}/start-conversation`, {
+    userId
+  }, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
