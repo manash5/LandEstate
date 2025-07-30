@@ -48,6 +48,10 @@ const PropertyDetailsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempEmployee, setTempEmployee] = useState({});
   
+  // Property editing state
+  const [isEditingProperty, setIsEditingProperty] = useState(false);
+  const [tempPropertyData, setTempPropertyData] = useState({});
+  
   // Employee assignment modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [employees, setEmployees] = useState([]);
@@ -75,6 +79,7 @@ const PropertyDetailsPage = () => {
         setPropertyData(property);
         setEmployee(property.employee);
         setTempEmployee(property.employee ? { ...property.employee } : {});
+        setTempPropertyData({ ...property }); // Initialize temp property data
         setError(null);
       } catch (err) {
         console.error('Error fetching property details:', err);
@@ -119,6 +124,46 @@ const PropertyDetailsPage = () => {
 
   const handleInputChange = (field, value) => {
     setTempEmployee(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Property editing handlers
+  const handleEditProperty = () => {
+    setIsEditingProperty(true);
+    setTempPropertyData({ ...propertyData });
+  };
+
+  const handleSaveProperty = async () => {
+    try {
+      const response = await updateProperty(propertyId, tempPropertyData);
+      if (response.data) {
+        setPropertyData({ ...tempPropertyData });
+        setIsEditingProperty(false);
+        toast.success('Property updated successfully!', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating property:', error);
+      toast.error('Failed to update property', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+    }
+  };
+
+  const handleCancelPropertyEdit = () => {
+    setTempPropertyData({ ...propertyData });
+    setIsEditingProperty(false);
+  };
+
+  const handlePropertyInputChange = (field, value) => {
+    setTempPropertyData(prev => ({
       ...prev,
       [field]: value
     }));
@@ -389,7 +434,7 @@ const PropertyDetailsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="h-screen bg-gray-50 flex">
         <Sidebar />
         <div className="min-w-[75vw] m-10 flex items-center justify-center">
           <div className="text-center">
@@ -430,9 +475,9 @@ const PropertyDetailsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-50 flex">
       <Sidebar />
-      <div className="min-w-[75vw] m-10">
+      <div className="min-w-[75vw] m-10 overflow-y-auto ">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -461,6 +506,39 @@ const PropertyDetailsPage = () => {
 
         {/* Property Basic Info */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Home className="w-5 h-5" />
+              Property Information
+            </h2>
+            {!isEditingProperty ? (
+              <button
+                onClick={handleEditProperty}
+                className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <Edit3 className="w-4 h-4" />
+                Edit Property
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveProperty}
+                  className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelPropertyEdit}
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+          
           <div className="flex items-start gap-6">
             <img 
               src={propertyData.mainImage || propertyData.images?.[0] || '/noimage.jpg'} 
@@ -468,28 +546,205 @@ const PropertyDetailsPage = () => {
               className="w-48 h-32 object-cover rounded-lg"
             />
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">{propertyData.name}</h2>
-              <p className="text-gray-600 mb-4">{propertyData.location}</p>
+              {/* Property Name */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Property Name
+                </label>
+                {isEditingProperty ? (
+                  <input
+                    type="text"
+                    value={tempPropertyData.name || ''}
+                    onChange={(e) => handlePropertyInputChange('name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-xl font-semibold"
+                  />
+                ) : (
+                  <h2 className="text-xl font-semibold text-gray-900">{propertyData.name}</h2>
+                )}
+              </div>
+
+              {/* Property Location */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                {isEditingProperty ? (
+                  <input
+                    type="text"
+                    value={tempPropertyData.location || ''}
+                    onChange={(e) => handlePropertyInputChange('location', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  />
+                ) : (
+                  <p className="text-gray-600">{propertyData.location}</p>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                {/* Price */}
                 <div>
-                  <span className="text-gray-500">Price:</span>
-                  <div className="font-medium">Rs. {parseFloat(propertyData.price).toLocaleString()}/{propertyData.priceDuration}</div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Price
+                  </label>
+                  {isEditingProperty ? (
+                    <div className="space-y-2">
+                      <input
+                        type="number"
+                        value={tempPropertyData.price || ''}
+                        onChange={(e) => handlePropertyInputChange('price', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        placeholder="Price"
+                      />
+                      <select
+                        value={tempPropertyData.priceDuration || 'One Day'}
+                        onChange={(e) => handlePropertyInputChange('priceDuration', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      >
+                        <option value="One Day">Per Day</option>
+                        <option value="One Week">Per Week</option>
+                        <option value="One Month">Per Month</option>
+                        <option value="One Year">Per Year</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="font-medium">Rs. {parseFloat(propertyData.price).toLocaleString()}/{propertyData.priceDuration}</div>
+                  )}
                 </div>
+
+                {/* Bedrooms */}
                 <div>
-                  <span className="text-gray-500">Bedrooms:</span>
-                  <div className="font-medium">{propertyData.beds}</div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bedrooms
+                  </label>
+                  {isEditingProperty ? (
+                    <input
+                      type="number"
+                      value={tempPropertyData.beds || ''}
+                      onChange={(e) => handlePropertyInputChange('beds', parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      min="0"
+                    />
+                  ) : (
+                    <div className="font-medium">{propertyData.beds}</div>
+                  )}
                 </div>
+
+                {/* Bathrooms */}
                 <div>
-                  <span className="text-gray-500">Bathrooms:</span>
-                  <div className="font-medium">{propertyData.baths}</div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bathrooms
+                  </label>
+                  {isEditingProperty ? (
+                    <input
+                      type="number"
+                      value={tempPropertyData.baths || ''}
+                      onChange={(e) => handlePropertyInputChange('baths', parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      min="0"
+                    />
+                  ) : (
+                    <div className="font-medium">{propertyData.baths}</div>
+                  )}
                 </div>
+
+                {/* Area */}
                 <div>
-                  <span className="text-gray-500">Area:</span>
-                  <div className="font-medium">{propertyData.areaSqm} sqm</div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Area (sqm)
+                  </label>
+                  {isEditingProperty ? (
+                    <input
+                      type="number"
+                      value={tempPropertyData.areaSqm || ''}
+                      onChange={(e) => handlePropertyInputChange('areaSqm', parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      min="0"
+                    />
+                  ) : (
+                    <div className="font-medium">{propertyData.areaSqm} sqm</div>
+                  )}
                 </div>
               </div>
-              {propertyData.description && (
-                <p className="mt-4 text-gray-700">{propertyData.description}</p>
+
+              {/* Property Type */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Property Type
+                </label>
+                {isEditingProperty ? (
+                  <select
+                    value={tempPropertyData.type || 'House'}
+                    onChange={(e) => handlePropertyInputChange('type', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  >
+                    <option value="House">House</option>
+                    <option value="Apartment">Apartment</option>
+                    <option value="Condo">Condo</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Studio">Studio</option>
+                    <option value="Commercial">Commercial</option>
+                  </select>
+                ) : (
+                  <div className="font-medium">{propertyData.type || 'House'}</div>
+                )}
+              </div>
+
+              {/* Amenities */}
+              {isEditingProperty && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Amenities
+                  </label>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={tempPropertyData.hasKitchen || false}
+                        onChange={(e) => handlePropertyInputChange('hasKitchen', e.target.checked)}
+                        className="mr-2"
+                      />
+                      Kitchen
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={tempPropertyData.hasBalcony || false}
+                        onChange={(e) => handlePropertyInputChange('hasBalcony', e.target.checked)}
+                        className="mr-2"
+                      />
+                      Balcony
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={tempPropertyData.hasParking || false}
+                        onChange={(e) => handlePropertyInputChange('hasParking', e.target.checked)}
+                        className="mr-2"
+                      />
+                      Parking
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {(propertyData.description || isEditingProperty) && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  {isEditingProperty ? (
+                    <textarea
+                      value={tempPropertyData.description || ''}
+                      onChange={(e) => handlePropertyInputChange('description', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      rows="3"
+                      placeholder="Property description..."
+                    />
+                  ) : (
+                    <p className="text-gray-700">{propertyData.description}</p>
+                  )}
+                </div>
               )}
             </div>
           </div>
