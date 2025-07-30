@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Save, X, Home, ArrowLeft, User, Calendar, AlertTriangle, DollarSign, Wrench, Phone, Mail } from 'lucide-react';
+import { Edit3, Save, X, Home, ArrowLeft, User, Calendar, AlertTriangle, DollarSign, Wrench, Phone, Mail, Plus } from 'lucide-react';
 import Sidebar from './sidebar';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getPropertyDetails } from '../../services/api';
+import { getPropertyDetails, getEmployees, createEmployee, updateProperty } from '../../services/api';
+import { toast, ToastContainer, Bounce } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Simple DataTable component since we can't import react-data-table-component
 const DataTable = ({ columns, data }) => {
@@ -45,6 +47,18 @@ const PropertyDetailsPage = () => {
   const [employee, setEmployee] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [tempEmployee, setTempEmployee] = useState({});
+  
+  // Employee assignment modal state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [showCreateEmployeeModal, setShowCreateEmployeeModal] = useState(false);
+  const [newEmployeeData, setNewEmployeeData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: ''
+  });
 
   // Fetch property details from API
   useEffect(() => {
@@ -104,6 +118,114 @@ const PropertyDetailsPage = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  // Fetch employees when modal opens
+  const fetchEmployees = async () => {
+    try {
+      const response = await getEmployees();
+      if (response.data?.success) {
+        setEmployees(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      toast.error('Failed to fetch employees', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+    }
+  };
+
+  // Handle opening assignment modal
+  const handleAssignEmployee = () => {
+    setShowAssignModal(true);
+    fetchEmployees();
+  };
+
+  // Handle employee assignment
+  const handleConfirmAssignment = async () => {
+    if (!selectedEmployeeId) {
+      toast.error('Please select an employee', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+      return;
+    }
+
+    try {
+      const response = await updateProperty(propertyId, { employeeId: selectedEmployeeId });
+      if (response.data) {
+        toast.success('Employee assigned successfully!', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
+        
+        // Refresh property data
+        const propertyResponse = await getPropertyDetails(propertyId);
+        const property = propertyResponse.data.data;
+        setPropertyData(property);
+        setEmployee(property.employee);
+        setTempEmployee(property.employee ? { ...property.employee } : {});
+        
+        setShowAssignModal(false);
+        setSelectedEmployeeId('');
+      }
+    } catch (error) {
+      console.error('Error assigning employee:', error);
+      toast.error('Failed to assign employee', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+    }
+  };
+
+  // Handle new employee creation
+  const handleCreateEmployee = async () => {
+    if (!newEmployeeData.name || !newEmployeeData.email || !newEmployeeData.password) {
+      toast.error('Please fill in all required fields', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+      return;
+    }
+
+    try {
+      const response = await createEmployee(newEmployeeData);
+      if (response.data?.success) {
+        toast.success('Employee created successfully!', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
+        
+        // Refresh employees list
+        fetchEmployees();
+        
+        // Auto-select the newly created employee
+        setSelectedEmployeeId(response.data.data.id.toString());
+        
+        // Reset form and close modal
+        setNewEmployeeData({
+          name: '',
+          email: '',
+          password: '',
+          phone: ''
+        });
+        setShowCreateEmployeeModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      toast.error('Failed to create employee', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+    }
   };
 
   // Columns for rooms table when employee is assigned
@@ -570,13 +692,179 @@ const PropertyDetailsPage = () => {
                 )}
               </div>
               
-              <button className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={handleAssignEmployee}
+                className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 Assign Employee
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Employee Assignment Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Assign Employee</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Employee
+                </label>
+                <select
+                  value={selectedEmployeeId}
+                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select an employee...</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} - {emp.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Don't have the employee you need?</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateEmployeeModal(true)}
+                  className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create New
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedEmployeeId('');
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmAssignment}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Assign Employee
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Employee Modal */}
+      {showCreateEmployeeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Create New Employee</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={newEmployeeData.name}
+                  onChange={(e) => setNewEmployeeData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={newEmployeeData.email}
+                  onChange={(e) => setNewEmployeeData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={newEmployeeData.phone}
+                  onChange={(e) => setNewEmployeeData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  value={newEmployeeData.password}
+                  onChange={(e) => setNewEmployeeData(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateEmployeeModal(false);
+                  setNewEmployeeData({
+                    name: '',
+                    email: '',
+                    password: '',
+                    phone: ''
+                  });
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateEmployee}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Create Employee
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        transition={Bounce}
+      />
     </div>
   );
 };

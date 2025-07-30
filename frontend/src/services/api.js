@@ -205,3 +205,13 @@ export const getPropertyDetails = (propertyId) => {
     }
   });
 };
+
+// Update property
+export const updateProperty = (propertyId, propertyData) => {
+  const token = localStorage.getItem('token');
+  return axios.patch(`${PROP}/${propertyId}`, propertyData, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};

@@ -4,7 +4,6 @@ import { getCurrentUser, fetchUserProperties, updateProfileImage } from '../../s
 import { ToastContainer, toast, Bounce } from 'react-toastify';
 
 const Profile = () => {
-  const [activeFilter, setActiveFilter] = useState('Popular');
   const [user, setUser] = useState(null);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,8 +11,6 @@ const Profile = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
   const fileInputRef = useRef(null);
-  
-  const filters = ['Popular', 'Recommended', 'Newest', 'Most Recent'];
 
   // Function to format date to "YYYY-MM-DD" format
   const formatMemberSince = (dateString) => {
@@ -359,27 +356,10 @@ const Profile = () => {
         
         {/* Property List Section */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-8">
+          <div className="mb-8">
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">My Properties</h3>
               <p className="text-gray-600">Manage and view your property listings</p>
-            </div>
-            
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
-              {filters.map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setActiveFilter(filter)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeFilter === filter
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
             </div>
           </div>
           
