@@ -55,6 +55,7 @@ const create = async (req, res) => {
             location: body.location,
             price: body.price,
             priceDuration: body.priceDuration || 'One Day',
+            type: body.type || 'House', // Add type with default value
             beds: body.beds ?? 1,
             baths: body.baths ?? 1,
             areaSqm: body.areaSqm ?? 0,
@@ -90,7 +91,7 @@ const update = async (req, res) => {
 
         // Update only provided fields
         const updatableFields = [
-            'name', 'location', 'price', 'priceDuration', 'beds', 'baths',
+            'name', 'location', 'price', 'priceDuration', 'type', 'beds', 'baths',
             'areaSqm', 'mainImage', 'images', 'hasKitchen', 'hasBalcony',
             'hasParking', 'description', 'employeeId'
         ];

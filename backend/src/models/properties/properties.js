@@ -24,6 +24,12 @@ export const Property = sequelize.define("Property", {
         allowNull: false,
         field: 'price_duration' 
     },
+    type: {
+        type: DataTypes.ENUM('Apartment', 'Hotel', 'House', 'Commercial'),
+        allowNull: false,
+        defaultValue: 'House',
+        field: 'type'
+    },
     beds: {
         type: DataTypes.INTEGER,
         allowNull: false,

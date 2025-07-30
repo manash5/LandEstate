@@ -18,6 +18,7 @@ const AddPropertyModal = ({
     location: "",
     price: "",
     priceDuration: "one time",
+    type: "House", // Add type with default value
     beds: "",
     baths: "",
     areaSqm: "",
@@ -209,6 +210,7 @@ useEffect(() => {
     formData.append("location", data.location);
     formData.append("price", data.price);
     formData.append("priceDuration", data.priceDuration);
+    formData.append("type", data.type); // Add type to form data
     formData.append("beds", data.beds);
     formData.append("baths", data.baths);
     formData.append("areaSqm", data.areaSqm);
@@ -295,6 +297,18 @@ useEffect(() => {
             className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             {...register("location", { required: true })}
             />
+        </div>
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+            <select
+            className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            {...register("type", { required: true })}
+            >
+            <option value="House">House</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Hotel">Hotel</option>
+            <option value="Commercial">Commercial</option>
+            </select>
         </div>
         <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Employee</label>

@@ -333,7 +333,7 @@ const Properties = () => {
     area: property.areaSqm ? `${property.areaSqm}M` : '',
     image: getImageUrl(property.mainImage), // Apply URL transformation here
     images: (property.images || []).map(getImageUrl),
-    type: property.type || 'Apartment',
+    type: property.type || 'House', // Use the type from database or default to House
     rating: 5,
     facilities: [
       property.hasKitchen ? 'Kitchen' : null,
