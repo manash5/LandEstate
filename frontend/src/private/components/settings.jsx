@@ -16,6 +16,7 @@ import {
   Mail,
   Phone
 } from 'lucide-react';
+import { ToastContainer, toast, Bounce } from 'react-toastify';
 import { getCurrentUser, createEmployee, getEmployees, updateEmployee, deleteEmployee } from '../../services/api';
 
 const settings = () => {
@@ -107,13 +108,21 @@ const settings = () => {
   const handleCreateEmployee = async () => {
     try {
       if (!employeeFormData.name || !employeeFormData.email || !employeeFormData.password) {
-        alert('Please fill in all required fields');
+        toast.error('Please fill in all required fields', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
         return;
       }
 
       const response = await createEmployee(employeeFormData);
       if (response.data?.success) {
-        alert('Employee created successfully!');
+        toast.success('Employee created successfully!', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
         setShowEmployeeModal(false);
         setEmployeeFormData({
           name: '',
@@ -125,7 +134,11 @@ const settings = () => {
       }
     } catch (error) {
       console.error('Error creating employee:', error);
-      alert('Failed to create employee');
+      toast.error('Failed to create employee', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
     }
   };
 
@@ -149,7 +162,11 @@ const settings = () => {
 
       const response = await updateEmployee(editingEmployee.id, updateData);
       if (response.data?.success) {
-        alert('Employee updated successfully!');
+        toast.success('Employee updated successfully!', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
         setShowEmployeeModal(false);
         setEditingEmployee(null);
         setEmployeeFormData({
@@ -162,7 +179,11 @@ const settings = () => {
       }
     } catch (error) {
       console.error('Error updating employee:', error);
-      alert('Failed to update employee');
+      toast.error('Failed to update employee', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
     }
   };
 
@@ -171,25 +192,49 @@ const settings = () => {
       try {
         const response = await deleteEmployee(employeeId);
         if (response.data?.success) {
-          alert('Employee deleted successfully!');
+          toast.success('Employee deleted successfully!', {
+            position: "bottom-right",
+            theme: "dark",
+            transition: Bounce,
+          });
           fetchEmployees();
         }
       } catch (error) {
         console.error('Error deleting employee:', error);
-        alert('Failed to delete employee');
+        toast.error('Failed to delete employee', {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
       }
+    }
+  };
+
+  const handleEmployeeSubmit = async () => {
+    if (editingEmployee) {
+      await handleUpdateEmployee();
+    } else {
+      await handleCreateEmployee();
     }
   };
 
   const handleSave = () => {
     console.log('Saving settings:', formData);
-    alert('Settings saved successfully!');
+    toast.success('Settings saved successfully!', {
+      position: "bottom-right",
+      theme: "dark",
+      transition: Bounce,
+    });
   };
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
       console.log('Logging out...');
-      alert('Logged out successfully!');
+      toast.success('Logged out successfully!', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
       // Logout logic 
     }
   };
@@ -431,6 +476,19 @@ const settings = () => {
 
   return (
     <div className="min-h-screen bg-slate-100">
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        transition={Bounce}
+      />
       {/* Employee Modal */}
       {showEmployeeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
