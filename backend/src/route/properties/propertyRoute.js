@@ -9,6 +9,7 @@ router.get("/user/:userId", PropertyController.getByUserId);
 router.get("/:id/details", PropertyController.getPropertyDetails);
 router.post("/", upload.array('images', 10), PropertyController.create); 
 router.patch("/:id", PropertyController.update);
+router.patch("/:id/transfer", PropertyController.transferOwnership);
 router.get("/:id", PropertyController.getById);
 router.delete("/:id", PropertyController.deleteById);
 

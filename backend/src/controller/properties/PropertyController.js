@@ -238,6 +238,54 @@ const getPropertyDetails = async (req, res) => {
     }
 }
 
+/**
+ * Transfer property ownership to another user
+ */
+const transferOwnership = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newOwnerName } = req.body;
+
+        // Check if property exists
+        const property = await Property.findOne({ where: { id } });
+        if (!property) {
+            return res.status(404).send({ message: "Property not found" });
+        }
+
+        // If newOwnerName is provided, find the user by name
+        if (newOwnerName && newOwnerName.trim() !== '') {
+            const newOwner = await User.findOne({ 
+                where: { name: newOwnerName.trim() } 
+            });
+            
+            if (!newOwner) {
+                return res.status(404).send({ message: "User with that name not found" });
+            }
+
+            // Update property ownership
+            property.userId = newOwner.id;
+            await property.save();
+
+            res.status(200).send({ 
+                data: property, 
+                message: `Property transferred successfully to ${newOwner.name}` 
+            });
+        } else {
+            // If no name provided, remove ownership (set userId to null)
+            property.userId = null;
+            await property.save();
+
+            res.status(200).send({ 
+                data: property, 
+                message: "Property ownership removed successfully" 
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Failed to transfer property ownership' });
+    }
+}
+
 export const PropertyController = {
     getAll,
     create,
@@ -245,5 +293,6 @@ export const PropertyController = {
     getByUserId,
     deleteById,
     update,
-    getPropertyDetails
+    getPropertyDetails,
+    transferOwnership
 };

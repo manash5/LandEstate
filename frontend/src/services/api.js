@@ -215,3 +215,13 @@ export const updateProperty = (propertyId, propertyData) => {
     }
   });
 };
+
+// Transfer property ownership
+export const transferPropertyOwnership = (propertyId, newOwnerName) => {
+  const token = localStorage.getItem('token');
+  return axios.patch(`${PROP}/${propertyId}/transfer`, { newOwnerName }, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};

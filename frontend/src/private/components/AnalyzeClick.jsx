@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Save, X, Home, ArrowLeft, User, Calendar, AlertTriangle, DollarSign, Wrench, Phone, Mail, Plus } from 'lucide-react';
+import { Edit3, Save, X, Home, ArrowLeft, User, Calendar, AlertTriangle, DollarSign, Wrench, Phone, Mail, Plus, ShoppingCart } from 'lucide-react';
 import Sidebar from './sidebar';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getPropertyDetails, getEmployees, createEmployee, updateProperty } from '../../services/api';
+import { getPropertyDetails, getEmployees, createEmployee, updateProperty, transferPropertyOwnership } from '../../services/api';
 import { toast, ToastContainer, Bounce } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -59,6 +59,10 @@ const PropertyDetailsPage = () => {
     password: '',
     phone: ''
   });
+
+  // Sell property modal state
+  const [showSellModal, setShowSellModal] = useState(false);
+  const [newOwnerName, setNewOwnerName] = useState('');
 
   // Fetch property details from API
   useEffect(() => {
@@ -221,6 +225,38 @@ const PropertyDetailsPage = () => {
     } catch (error) {
       console.error('Error creating employee:', error);
       toast.error('Failed to create employee', {
+        position: "bottom-right",
+        theme: "dark",
+        transition: Bounce,
+      });
+    }
+  };
+
+  // Handle property transfer/sell
+  const handleSellProperty = async () => {
+    try {
+      const response = await transferPropertyOwnership(propertyId, newOwnerName);
+      if (response.data) {
+        toast.success(response.data.message, {
+          position: "bottom-right",
+          theme: "dark",
+          transition: Bounce,
+        });
+        
+        // Refresh property data
+        const propertyResponse = await getPropertyDetails(propertyId);
+        const property = propertyResponse.data.data;
+        setPropertyData(property);
+        setEmployee(property.employee);
+        setTempEmployee(property.employee ? { ...property.employee } : {});
+        
+        setShowSellModal(false);
+        setNewOwnerName('');
+      }
+    } catch (error) {
+      console.error('Error transferring property:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to transfer property';
+      toast.error(errorMessage, {
         position: "bottom-right",
         theme: "dark",
         transition: Bounce,
@@ -399,18 +435,27 @@ const PropertyDetailsPage = () => {
       <div className="min-w-[75vw] m-10">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <ArrowLeft 
-              className="cursor-pointer hover:text-blue-600" 
-              onClick={() => navigate('/layout', { state: { showAnalyze: true } })}
-            />
-            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
-              <Home className="w-6 h-6 text-blue-600" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <ArrowLeft 
+                className="cursor-pointer hover:text-blue-600" 
+                onClick={() => navigate('/layout', { state: { showAnalyze: true } })}
+              />
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
+                <Home className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Property Analysis</h1>
+                <p className="text-gray-600">{propertyData.name}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Property Analysis</h1>
-              <p className="text-gray-600">{propertyData.name}</p>
-            </div>
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Sell Property
+            </button>
           </div>
         </div>
 
@@ -845,6 +890,54 @@ const PropertyDetailsPage = () => {
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
                 Create Employee
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sell Property Modal */}
+      {showSellModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Sell Property</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Owner's Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newOwnerName}
+                  onChange={(e) => setNewOwnerName(e.target.value)}
+                  placeholder="Enter new owner's name or leave empty"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  If you enter a name, the property will be transferred to that user. 
+                  If left empty, the property ownership will be removed.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSellModal(false);
+                  setNewOwnerName('');
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSellProperty}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                {newOwnerName.trim() ? 'Transfer Property' : 'Remove Ownership'}
               </button>
             </div>
           </div>
