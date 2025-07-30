@@ -1,43 +1,8 @@
-import React, { useState } from 'react';
-import { Edit3, Save, X, Home, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Edit3, Save, X, Home, ArrowLeft, User, Calendar, AlertTriangle, DollarSign, Wrench, Phone, Mail } from 'lucide-react';
 import Sidebar from './sidebar';
-import { useNavigate } from 'react-router-dom';
-
-// Mock data for the rental units
-const mockRentalData = [
-  {
-    id: 1,
-    unit: 'A101',
-    type: 'Rent',
-    amount: '$1,200',
-    status: 'Paid',
-    issue: 'No issue'
-  },
-  {
-    id: 2,
-    unit: 'A102',
-    type: 'Rent',
-    amount: '$1,200',
-    status: 'Unpaid',
-    issue: 'lacakg'
-  },
-  {
-    id: 3,
-    unit: 'A103',
-    type: 'Rent',
-    amount: '$1,200',
-    status: 'Unpaid',
-    issue: 'No issue'
-  },
-  {
-    id: 4,
-    unit: 'A104',
-    type: 'Rent',
-    amount: '$1,200',
-    status: 'Unpaid',
-    issue: 'Electrical issue'
-  }
-];
+import { useNavigate, useParams } from 'react-router-dom';
+import { getPropertyDetails } from '../../services/api';
 
 // Simple DataTable component since we can't import react-data-table-component
 const DataTable = ({ columns, data }) => {
@@ -72,13 +37,51 @@ const DataTable = ({ columns, data }) => {
 
 const PropertyDetailsPage = () => {
   const navigate = useNavigate(); 
-    
-  const [employee, setEmployee] = useState({
-    username: 'Ramesh',
-    password: 'Edit'
-  });
+  const { id: propertyId } = useParams();
+  
+  const [propertyData, setPropertyData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [tempEmployee, setTempEmployee] = useState({ ...employee });
+  const [tempEmployee, setTempEmployee] = useState({});
+
+  // Fetch property details from API
+  useEffect(() => {
+    const fetchPropertyData = async () => {
+      try {
+        setLoading(true);
+        const response = await getPropertyDetails(propertyId);
+        const property = response.data.data;
+        
+        setPropertyData(property);
+        setEmployee(property.employee);
+        setTempEmployee(property.employee ? { ...property.employee } : {});
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching property details:', err);
+        setError('Failed to load property details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (propertyId) {
+      fetchPropertyData();
+    }
+  }, [propertyId]);
+
+  // Calculate statistics for properties with employees
+  const stats = propertyData && propertyData.employee ? {
+    totalRooms: propertyData.rooms?.length || 0,
+    occupiedRooms: propertyData.rooms?.filter(room => room.status !== 'vacant').length || 0,
+    vacantRooms: propertyData.rooms?.filter(room => room.status === 'vacant').length || 0,
+    totalRent: propertyData.rooms?.reduce((sum, room) => sum + (parseFloat(room.rent) || 0), 0) || 0,
+    paidRent: propertyData.rooms?.filter(room => room.status === 'paid').reduce((sum, room) => sum + (parseFloat(room.rent) || 0), 0) || 0,
+    unpaidRent: propertyData.rooms?.filter(room => room.status === 'unpaid').reduce((sum, room) => sum + (parseFloat(room.rent) || 0), 0) || 0,
+    openIssues: propertyData.rooms?.filter(room => room.issue).length || 0,
+    lastMaintenanceDate: propertyData.maintenanceRecords?.[0]?.serviceDate || propertyData.maintenanceRecords?.[0]?.createdAt
+  } : null;
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -88,6 +91,7 @@ const PropertyDetailsPage = () => {
   const handleSave = () => {
     setEmployee({ ...tempEmployee });
     setIsEditing(false);
+    // In real app, make API call to update employee
   };
 
   const handleCancel = () => {
@@ -102,33 +106,46 @@ const PropertyDetailsPage = () => {
     }));
   };
 
-  // Define columns for the data table
-  const columns = [
+  // Columns for rooms table when employee is assigned
+  const roomColumns = [
     {
-      name: 'Unit',
-      selector: 'unit',
+      name: 'Room',
+      selector: 'number',
       sortable: true,
     },
     {
-      name: 'Type',
-      selector: 'type',
-      sortable: true,
+      name: 'Tenant',
+      selector: 'tenant',
+      cell: (row) => (
+        <div>
+          <div className="font-medium">{row.tenant || 'Vacant'}</div>
+          {row.tenantContact && (
+            <div className="text-xs text-gray-500">{row.tenantContact}</div>
+          )}
+        </div>
+      ),
     },
     {
-      name: 'Amount',
-      selector: 'amount',
-      sortable: true,
+      name: 'Rent',
+      selector: 'rent',
+      cell: (row) => (
+        <span className="font-medium">
+          {row.rent && parseFloat(row.rent) > 0 ? `Rs. ${parseFloat(row.rent).toLocaleString()}` : 'N/A'}
+        </span>
+      ),
     },
     {
       name: 'Status',
       selector: 'status',
       cell: (row) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.status === 'Paid' 
+          row.status === 'paid' 
             ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
+            : row.status === 'unpaid'
+            ? 'bg-red-100 text-red-800'
+            : 'bg-gray-100 text-gray-800'
         }`}>
-          {row.status}
+          {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
         </span>
       ),
     },
@@ -137,113 +154,428 @@ const PropertyDetailsPage = () => {
       selector: 'issue',
       cell: (row) => (
         <span className={`text-sm ${
-          row.issue === 'No issue' 
+          !row.issue 
             ? 'text-gray-500' 
             : 'text-red-600'
         }`}>
-          {row.issue}
+          {row.issue || 'No issue'}
+        </span>
+      ),
+    },
+    {
+      name: 'Last Updated',
+      selector: 'lastUpdated',
+      cell: (row) => (
+        <span className="text-xs text-gray-500">
+          {row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : 'N/A'}
         </span>
       ),
     },
   ];
 
+  // Columns for maintenance records
+  const maintenanceColumns = [
+    {
+      name: 'Service',
+      selector: 'serviceName',
+      sortable: true,
+    },
+    {
+      name: 'Location',
+      selector: 'location',
+    },
+    {
+      name: 'Date',
+      selector: 'date',
+      cell: (row) => row.serviceDate ? new Date(row.serviceDate).toLocaleDateString() : (row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'N/A'),
+    },
+    {
+      name: 'Status',
+      selector: 'status',
+      cell: (row) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          row.status === 'completed' 
+            ? 'bg-green-100 text-green-800' 
+            : row.status === 'in-progress'
+            ? 'bg-yellow-100 text-yellow-800'
+            : 'bg-gray-100 text-gray-800'
+        }`}>
+          {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+        </span>
+      ),
+    },
+    {
+      name: 'Cost',
+      selector: 'cost',
+      cell: (row) => row.cost && parseFloat(row.cost) > 0 ? `Rs. ${parseFloat(row.cost).toLocaleString()}` : 'N/A',
+    },
+    {
+      name: 'Technician',
+      selector: 'technician',
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar />
+        <div className="min-w-[75vw] m-10 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading property details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar />
+        <div className="min-w-[75vw] m-10 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-600 mb-4">
+              <AlertTriangle className="w-12 h-12 mx-auto mb-2" />
+              <p className="text-lg font-semibold">Error</p>
+            </div>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => navigate('/layout', { state: { showAnalyze: true } })}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!propertyData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar />
+        <div className="min-w-[75vw] m-10 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600">Property not found</p>
+            <button 
+              onClick={() => navigate('/layout', { state: { showAnalyze: true } })}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
-      <div className="min-w-[75vw] m-10 ">
+      <div className="min-w-[75vw] m-10">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-          <ArrowLeft onClick={()=>navigate('/layout', { state: { showAnalyze: true } })}/>
+            <ArrowLeft 
+              className="cursor-pointer hover:text-blue-600" 
+              onClick={() => navigate('/layout', { state: { showAnalyze: true } })}
+            />
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
               <Home className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Property Details</h1>
-              <p className="text-gray-600">House 1</p>
+              <h1 className="text-2xl font-bold text-gray-900">Property Analysis</h1>
+              <p className="text-gray-600">{propertyData.name}</p>
             </div>
           </div>
         </div>
 
-        {/* Employee Information Card */}
+        {/* Property Basic Info */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Employee Information</h2>
-            {!isEditing ? (
-              <button
-                onClick={handleEdit}
-                className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <Edit3 className="w-4 h-4" />
-                Edit
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  Save
-                </button>
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </button>
+          <div className="flex items-start gap-6">
+            <img 
+              src={propertyData.mainImage || propertyData.images?.[0] || '/noimage.jpg'} 
+              alt={propertyData.name}
+              className="w-48 h-32 object-cover rounded-lg"
+            />
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">{propertyData.name}</h2>
+              <p className="text-gray-600 mb-4">{propertyData.location}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Price:</span>
+                  <div className="font-medium">Rs. {parseFloat(propertyData.price).toLocaleString()}/{propertyData.priceDuration}</div>
+                </div>
+                <div>
+                  <span className="text-gray-500">Bedrooms:</span>
+                  <div className="font-medium">{propertyData.beds}</div>
+                </div>
+                <div>
+                  <span className="text-gray-500">Bathrooms:</span>
+                  <div className="font-medium">{propertyData.baths}</div>
+                </div>
+                <div>
+                  <span className="text-gray-500">Area:</span>
+                  <div className="font-medium">{propertyData.areaSqm} sqm</div>
+                </div>
+              </div>
+              {propertyData.description && (
+                <p className="mt-4 text-gray-700">{propertyData.description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {propertyData.employee ? (
+          // Show detailed management view when employee is assigned
+          <>
+            {/* Statistics Overview */}
+            {stats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
+                      <Home className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Occupancy</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.occupiedRooms}/{stats.totalRooms}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
+                      <DollarSign className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Monthly Rent</p>
+                      <p className="text-2xl font-bold text-gray-900">Rs. {stats.totalRent.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-lg">
+                      <AlertTriangle className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Open Issues</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.openIssues}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg">
+                      <Wrench className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Last Service</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {stats.lastMaintenanceDate 
+                          ? new Date(stats.lastMaintenanceDate).toLocaleDateString() 
+                          : 'N/A'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={tempEmployee.username}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                />
-              ) : (
-                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {employee.username}
+            {/* Employee Information Card */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Assigned Employee
+                </h2>
+                {!isEditing ? (
+                  <button
+                    onClick={handleEdit}
+                    className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    Edit
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSave}
+                      className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors"
+                    >
+                      <Save className="w-4 h-4" />
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white hover:bg-gray-700 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={tempEmployee.name || ''}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                  ) : (
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                      {employee?.name || 'N/A'}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="email"
+                      value={tempEmployee.email || ''}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                  ) : (
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-500" />
+                      {employee?.email || 'N/A'}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      value={tempEmployee.phone || ''}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                  ) : (
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-gray-500" />
+                      {employee?.phone || 'N/A'}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Hire Date
+                  </label>
+                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                    {employee?.hireDate ? new Date(employee.hireDate).toLocaleDateString() : 'N/A'}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={tempEmployee.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            {/* Rooms Table */}
+            {propertyData.rooms && propertyData.rooms.length > 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Room Management</h2>
+                <DataTable 
+                  columns={roomColumns} 
+                  data={propertyData.rooms}
                 />
-              ) : (
-                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                  {employee.password}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Room Management</h2>
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No rooms have been added yet.</p>
+                  <p className="text-sm text-gray-400 mt-2">Employee can add rooms from their portal.</p>
                 </div>
-              )}
+              </div>
+            )}
+
+            {/* Maintenance Records */}
+            {propertyData.maintenanceRecords && propertyData.maintenanceRecords.length > 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Maintenance Records</h2>
+                <DataTable 
+                  columns={maintenanceColumns} 
+                  data={propertyData.maintenanceRecords}
+                />
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Maintenance Records</h2>
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No maintenance records found.</p>
+                  <p className="text-sm text-gray-400 mt-2">Employee can add maintenance records from their portal.</p>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // Show basic property view when no employee is assigned
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="text-center py-12">
+              <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Employee Assigned</h3>
+              <p className="text-gray-600 mb-6">
+                This property doesn't have an assigned employee yet. Only basic property information is available.
+              </p>
+              
+              {/* Basic property amenities */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto text-left">
+                {propertyData.hasKitchen && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Kitchen Available
+                  </div>
+                )}
+                {propertyData.hasBalcony && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Balcony Available
+                  </div>
+                )}
+                {propertyData.hasParking && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Parking Available
+                  </div>
+                )}
+                {!propertyData.hasKitchen && !propertyData.hasBalcony && !propertyData.hasParking && (
+                  <div className="col-span-3 text-center">
+                    <p className="text-sm text-gray-400">No additional amenities listed</p>
+                  </div>
+                )}
+              </div>
+              
+              <button className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Assign Employee
+              </button>
             </div>
           </div>
-        </div>
-
-        {/* Rental Units Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Rental Units</h2>
-          <DataTable 
-            columns={columns} 
-            data={mockRentalData}
-          />
-        </div>
+        )}
       </div>
     </div>
   );

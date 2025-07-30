@@ -195,3 +195,13 @@ export const getCurrentEmployee = () => {
     }
   });
 };
+
+// Get property details with rooms and maintenance records
+export const getPropertyDetails = (propertyId) => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${PROP}/${propertyId}/details`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};

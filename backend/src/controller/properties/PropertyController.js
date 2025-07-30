@@ -1,4 +1,4 @@
-import { Property, User, Employee } from '../../models/index.js';
+import { Property, User, Employee, Room, MaintenanceRecord } from '../../models/index.js';
 
 /**
  * Fetch all properties
@@ -192,11 +192,57 @@ const getByUserId = async (req, res) => {
     }
 }
 
+/**
+ * Get property details by ID with rooms and maintenance records
+ */
+const getPropertyDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const property = await Property.findByPk(id, {
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'phone', 'address']
+                },
+                {
+                    model: Employee,
+                    as: 'employee',
+                    attributes: ['id', 'name', 'email', 'phone', 'hireDate'],
+                    required: false
+                },
+                {
+                    model: Room,
+                    as: 'rooms',
+                    attributes: ['id', 'number', 'tenant', 'tenantContact', 'rent', 'rentDueDate', 'status', 'issue', 'updatedAt']
+                },
+                {
+                    model: MaintenanceRecord,
+                    as: 'maintenanceRecords',
+                    attributes: ['id', 'serviceName', 'location', 'description', 'status', 'cost', 'technician', 'serviceDate', 'createdAt'],
+                    order: [['createdAt', 'DESC']]
+                }
+            ]
+        });
+
+        if (!property) {
+            return res.status(404).send({ message: "Property not found" });
+        }
+
+        res.status(200).send({ data: property, message: "Successfully fetched property details" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Failed to fetch property details' });
+    }
+}
+
 export const PropertyController = {
     getAll,
     create,
     getById,
     getByUserId,
     deleteById,
-    update
+    update,
+    getPropertyDetails
 };

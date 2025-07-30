@@ -1,5 +1,7 @@
 import { User } from './user/User.js'
 import { Property } from './properties/properties.js'
+import { Room } from './properties/Room.js'
+import { MaintenanceRecord } from './properties/MaintenanceRecord.js'
 import { Conversation } from './message/Conversation.js'
 import { Message } from './message/Message.js'
 import { Employee } from './employee/Employee.js'
@@ -11,6 +13,14 @@ Property.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 // Employee-Property relationships
 Employee.hasMany(Property, { foreignKey: 'employeeId', as: 'properties' });
 Property.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
+
+// Property-Room relationships
+Property.hasMany(Room, { foreignKey: 'propertyId', as: 'rooms' });
+Room.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
+
+// Property-MaintenanceRecord relationships
+Property.hasMany(MaintenanceRecord, { foreignKey: 'propertyId', as: 'maintenanceRecords' });
+MaintenanceRecord.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
 
 // Message relationships
 User.hasMany(Conversation, { foreignKey: 'user1Id', as: 'conversationsAsUser1' });
@@ -28,4 +38,4 @@ Message.belongsTo(Conversation, { foreignKey: 'conversationId', as: 'conversatio
 
 Conversation.belongsTo(Message, { foreignKey: 'lastMessageId', as: 'lastMessage' });
 
-export { User, Property, Conversation, Message, Employee }
+export { User, Property, Room, MaintenanceRecord, Conversation, Message, Employee }
