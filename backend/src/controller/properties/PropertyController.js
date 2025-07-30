@@ -1,4 +1,4 @@
-import { Property, User } from '../../models/index.js';
+import { Property, User, Employee } from '../../models/index.js';
 
 /**
  * Fetch all properties
@@ -6,11 +6,19 @@ import { Property, User } from '../../models/index.js';
 const getAll = async (req, res) => {
     try {
         const properties = await Property.findAll({
-            include: [{
-                model: User,
-                as: 'user',
-                attributes: ['id', 'name', 'email', 'phone', 'address']
-            }]
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'phone', 'address']
+                },
+                {
+                    model: Employee,
+                    as: 'employee',
+                    attributes: ['id', 'name', 'email', 'phone'],
+                    required: false // This makes it a LEFT JOIN so properties without employees are still included
+                }
+            ]
         });
         res.status(200).send({ data: properties, message: "Successfully fetched properties" });
     } catch (e) {
@@ -56,7 +64,8 @@ const create = async (req, res) => {
             hasBalcony: body.hasBalcony ?? false,
             hasParking: body.hasParking ?? false,
             description: body.description || '',
-            userId: body.userId
+            userId: body.userId,
+            employeeId: body.employeeId || null // Allow null for no employee assigned
         });
 
         res.status(201).send({ data: property, message: "Successfully created property" });
@@ -83,7 +92,7 @@ const update = async (req, res) => {
         const updatableFields = [
             'name', 'location', 'price', 'priceDuration', 'beds', 'baths',
             'areaSqm', 'mainImage', 'images', 'hasKitchen', 'hasBalcony',
-            'hasParking', 'description'
+            'hasParking', 'description', 'employeeId'
         ];
 
         updatableFields.forEach(field => {
@@ -128,11 +137,19 @@ const getById = async (req, res) => {
         const { id } = req.params;
         const property = await Property.findOne({ 
             where: { id },
-            include: [{
-                model: User,
-                as: 'user',
-                attributes: ['id', 'name', 'email', 'phone', 'address']
-            }]
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'phone', 'address']
+                },
+                {
+                    model: Employee,
+                    as: 'employee',
+                    attributes: ['id', 'name', 'email', 'phone'],
+                    required: false
+                }
+            ]
         });
 
         if (!property) {
@@ -154,11 +171,19 @@ const getByUserId = async (req, res) => {
         const { userId } = req.params;
         const properties = await Property.findAll({
             where: { userId },
-            include: [{
-                model: User,
-                as: 'user',
-                attributes: ['id', 'name', 'email', 'phone', 'address']
-            }]
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'phone', 'address']
+                },
+                {
+                    model: Employee,
+                    as: 'employee',
+                    attributes: ['id', 'name', 'email', 'phone'],
+                    required: false
+                }
+            ]
         });
         res.status(200).send({ data: properties, message: "Successfully fetched user properties" });
     } catch (e) {

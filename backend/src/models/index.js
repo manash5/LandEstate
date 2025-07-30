@@ -8,6 +8,10 @@ import { Employee } from './employee/Employee.js'
 User.hasMany(Property, { foreignKey: 'userId', as: 'properties' });
 Property.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// Employee-Property relationships
+Employee.hasMany(Property, { foreignKey: 'employeeId', as: 'properties' });
+Property.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
+
 // Message relationships
 User.hasMany(Conversation, { foreignKey: 'user1Id', as: 'conversationsAsUser1' });
 User.hasMany(Conversation, { foreignKey: 'user2Id', as: 'conversationsAsUser2' });

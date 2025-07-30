@@ -97,6 +97,15 @@ export const Property = sequelize.define("Property", {
             key: 'id'
         }
     },
+    employeeId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: 'employee_id',
+        references: {
+            model: 'Employees',
+            key: 'id'
+        }
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
