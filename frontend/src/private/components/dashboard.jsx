@@ -15,6 +15,9 @@ const dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [propertyTypeDistribution, setPropertyTypeDistribution] = useState([]);
+  const [priceRangeData, setPriceRangeData] = useState([]);
+  const [featuredProperties, setFeaturedProperties] = useState([]);
 
   const handleSidebarToggle = (collapsed) => {
     setIsSidebarCollapsed(collapsed);
@@ -79,6 +82,61 @@ const dashboard = () => {
           newListing
         });
 
+        // Calculate property type distribution from all properties
+        const propertyTypes = {};
+        allProperties.forEach(property => {
+          if (property.type) {
+            propertyTypes[property.type] = (propertyTypes[property.type] || 0) + 1;
+          }
+        });
+
+        const totalProperties = allProperties.length;
+        const typeDistribution = Object.entries(propertyTypes).map(([type, count]) => ({
+          type,
+          count,
+          percentage: totalProperties > 0 ? Math.round((count / totalProperties) * 100) : 0
+        }));
+
+        setPropertyTypeDistribution(typeDistribution);
+
+        // Calculate price range distribution
+        const priceRanges = {
+          'Under $200K': 0,
+          '$200K - $400K': 0,
+          '$400K - $600K': 0,
+          '$600K - $800K': 0,
+          '$800K - $1M': 0,
+          'Over $1M': 0
+        };
+
+        allProperties.forEach(property => {
+          const price = parseFloat(property.price) || 0;
+          if (price < 200000) {
+            priceRanges['Under $200K']++;
+          } else if (price < 400000) {
+            priceRanges['$200K - $400K']++;
+          } else if (price < 600000) {
+            priceRanges['$400K - $600K']++;
+          } else if (price < 800000) {
+            priceRanges['$600K - $800K']++;
+          } else if (price < 1000000) {
+            priceRanges['$800K - $1M']++;
+          } else {
+            priceRanges['Over $1M']++;
+          }
+        });
+
+        const priceRangeArray = Object.entries(priceRanges).map(([range, count]) => ({
+          range,
+          count,
+          percentage: totalProperties > 0 ? Math.round((count / totalProperties) * 100) : 0
+        }));
+
+        setPriceRangeData(priceRangeArray);
+
+        // Set featured properties (user's most recent properties)
+        setFeaturedProperties(userProperties.slice(0, 2));
+
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         if (error.response && error.response.status === 401) {
@@ -134,36 +192,6 @@ const dashboard = () => {
       color: 'from-pink-500 to-rose-500', 
       icon: Star 
     },
-  ];
-
-  const properties = [
-    {
-      id: 1,
-      title: 'Star Sun Hotel & Apartment',
-      location: 'North Carolina, USA',
-      price: '$500',
-      image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=250&fit=crop',
-      views: 142,
-      likes: 23
-    },
-    {
-      id: 2,
-      title: 'Letdo JI Hotel & Apartment',
-      location: 'New York City, USA',
-      price: '$650',
-      image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=250&fit=crop',
-      views: 98,
-      likes: 31
-    },
-    {
-      id: 3,
-      title: 'Metro Jayakar Apartment',
-      location: 'North Carolina, USA',
-      price: '$450',
-      image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=250&fit=crop',
-      views: 167,
-      likes: 45
-    }
   ];
 
   const referralData = [
@@ -235,52 +263,62 @@ const dashboard = () => {
             <div className="lg:col-span-2 space-y-8">
               {/* Recommend for you */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Recommend for you</h3>
-                <p className="text-gray-500 mb-4">Based on search history</p>
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Market Analytics</h3>
+                <p className="text-gray-500 mb-4">Property distribution and pricing insights</p>
                 <div className="h-64">
                   {/* Property Type Distribution Chart */}
                   <div className="grid grid-cols-2 gap-4 h-full">
                     <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Property Types</h4>
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Apartments</span>
-                          <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                            <div className="bg-blue-500 h-2 rounded-full" style={{width: '75%'}}></div>
-                          </div>
-                          <span className="text-xs font-semibold">75%</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Houses</span>
-                          <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                            <div className="bg-purple-500 h-2 rounded-full" style={{width: '45%'}}></div>
-                          </div>
-                          <span className="text-xs font-semibold">45%</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Commercial</span>
-                          <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
-                            <div className="bg-green-500 h-2 rounded-full" style={{width: '60%'}}></div>
-                          </div>
-                          <span className="text-xs font-semibold">60%</span>
-                        </div>
+                        {loading ? (
+                          <div className="text-center text-gray-500 text-xs">Loading...</div>
+                        ) : propertyTypeDistribution.length > 0 ? (
+                          propertyTypeDistribution.map((item, index) => {
+                            const colors = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-yellow-500'];
+                            const colorClass = colors[index % colors.length];
+                            return (
+                              <div key={item.type} className="flex items-center justify-between">
+                                <span className="text-xs text-gray-600">{item.type}</span>
+                                <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className={`${colorClass} h-2 rounded-full`} 
+                                    style={{width: `${item.percentage}%`}}
+                                  ></div>
+                                </div>
+                                <span className="text-xs font-semibold">{item.percentage}%</span>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center text-gray-500 text-xs">No properties found</div>
+                        )}
                       </div>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl p-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Price Range Interest</h4>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Price Range Distribution</h4>
                       <div className="h-32 flex items-end space-x-2">
-                        {[60, 80, 45, 90, 70, 55].map((height, index) => (
-                          <div
-                            key={index}
-                            className="bg-gradient-to-t from-teal-500 to-green-400 rounded-t-lg flex-1"
-                            style={{ height: `${height}%` }}
-                          ></div>
-                        ))}
+                        {loading ? (
+                          <div className="flex-1 text-center text-gray-500 text-xs">Loading...</div>
+                        ) : priceRangeData.length > 0 ? (
+                          priceRangeData.map((item, index) => (
+                            <div
+                              key={index}
+                              className="bg-gradient-to-t from-teal-500 to-green-400 rounded-t-lg flex-1"
+                              style={{ height: `${Math.max(item.percentage, 5)}%` }}
+                              title={`${item.range}: ${item.count} properties (${item.percentage}%)`}
+                            ></div>
+                          ))
+                        ) : (
+                          <div className="flex-1 text-center text-gray-500 text-xs">No data</div>
+                        )}
                       </div>
                       <div className="flex justify-between text-xs text-gray-500 mt-2">
-                        <span>$200K</span>
-                        <span>$500K</span>
-                        <span>$800K+</span>
+                        <span>&lt;$200K</span>
+                        <span>$400K</span>
+                        <span>$600K</span>
+                        <span>$800K</span>
+                        <span>$1M+</span>
                       </div>
                     </div>
                   </div>
@@ -336,32 +374,47 @@ const dashboard = () => {
 
               {/* Featured Properties */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Featured Properties</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4">Your Recent Properties</h3>
                 <div className="space-y-4">
-                  {properties.slice(0, 2).map((property) => (
-                    <div key={property.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-300">
-                      <img
-                        src={property.image}
-                        alt={property.title}
-                        className="w-full h-32 object-cover rounded-lg mb-3"
-                      />
-                      <h4 className="font-semibold text-gray-800 text-sm mb-1">{property.title}</h4>
-                      <p className="text-gray-500 text-xs mb-2">{property.location}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-blue-600 font-bold text-sm">{property.price}</span>
-                        <div className="flex items-center space-x-2 text-gray-400">
-                          <div className="flex items-center space-x-1">
-                            <Eye className="w-3 h-3" />
-                            <span className="text-xs">{property.views}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Heart className="w-3 h-3" />
-                            <span className="text-xs">{property.likes}</span>
+                  {loading ? (
+                    <div className="text-center text-gray-500 text-sm">Loading properties...</div>
+                  ) : featuredProperties.length > 0 ? (
+                    featuredProperties.map((property) => (
+                      <div key={property.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-300">
+                        <img
+                          src={property.mainImage || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=250&fit=crop'}
+                          alt={property.name}
+                          className="w-full h-32 object-cover rounded-lg mb-3"
+                          onError={(e) => {
+                            e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=250&fit=crop';
+                          }}
+                        />
+                        <h4 className="font-semibold text-gray-800 text-sm mb-1">{property.name}</h4>
+                        <p className="text-gray-500 text-xs mb-2">{property.location}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-blue-600 font-bold text-sm">
+                            ${Number(property.price).toLocaleString()}{property.priceDuration ? `/${property.priceDuration}` : ''}
+                          </span>
+                          <div className="flex items-center space-x-2 text-gray-400">
+                            <div className="flex items-center space-x-1">
+                              <Eye className="w-3 h-3" />
+                              <span className="text-xs">{property.views || 0}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Heart className="w-3 h-3" />
+                              <span className="text-xs">{property.likes || 0}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 text-sm py-8">
+                      <Building className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No properties found</p>
+                      <p className="text-xs">Start by adding your first property!</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
