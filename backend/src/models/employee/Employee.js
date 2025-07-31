@@ -32,6 +32,15 @@ export const Employee = sequelize.define("Employee", {
     hireDate: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
+    },
+    managerId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: 'manager_id',
+        references: {
+            model: 'Users',
+            key: 'id'
+        }
     }
 }, {
     tableName: 'Employees',

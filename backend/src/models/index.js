@@ -10,6 +10,10 @@ import { Employee } from './employee/Employee.js'
 User.hasMany(Property, { foreignKey: 'userId', as: 'properties' });
 Property.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// User-Employee relationships (User can manage multiple employees)
+User.hasMany(Employee, { foreignKey: 'managerId', as: 'managedEmployees' });
+Employee.belongsTo(User, { foreignKey: 'managerId', as: 'manager' });
+
 // Employee-Property relationships
 Employee.hasMany(Property, { foreignKey: 'employeeId', as: 'properties' });
 Property.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });

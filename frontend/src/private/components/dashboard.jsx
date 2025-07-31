@@ -1,14 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, Building, Users, Star, Settings, Bell, Search, TrendingUp, TrendingDown, Eye, Heart, FileSpreadsheet } from 'lucide-react';
 import Sidebar from './sidebar';
+import { getCurrentUser, fetchUserProperties, getEmployees, fetchProperties } from '../../services/api';
 
 const dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState({
+    propsSale: 0,
+    propsRented: 0,
+    noOfEmployees: 0,
+    newListing: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const handleSidebarToggle = (collapsed) => {
     setIsSidebarCollapsed(collapsed);
   };
+
+  // Fetch dashboard statistics
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // First, get current user data
+        const userResponse = await getCurrentUser();
+        if (!userResponse.data.data) {
+          setError('User not found. Please login again.');
+          return;
+        }
+
+        const user = userResponse.data.data;
+        setCurrentUser(user);
+
+        // Fetch user's properties
+        const userPropertiesResponse = await fetchUserProperties(user.id);
+        const userProperties = userPropertiesResponse.data.data || [];
+
+        // 1. Props Sale - Total number of properties the user has listed
+        const propsSale = userProperties.length;
+
+        // 2. Props Rented - Properties with monthly rent (priceDuration includes 'month')
+        const propsRented = userProperties.filter(property => 
+          property.priceDuration && property.priceDuration.toLowerCase().includes('month')
+        ).length;
+
+        // 3. No of Employees - Get all employees (assuming they belong to the current user)
+        let noOfEmployees = 0;
+        try {
+          const employeesResponse = await getEmployees();
+          noOfEmployees = employeesResponse.data.data ? employeesResponse.data.data.length : 0;
+        } catch (empError) {
+          console.log('Could not fetch employees:', empError);
+          // If employees endpoint fails, set to 0
+          noOfEmployees = 0;
+        }
+
+        // 4. New Listing - Total properties added this month by all users
+        const allPropertiesResponse = await fetchProperties();
+        const allProperties = allPropertiesResponse.data.data || [];
+        
+        const currentDate = new Date();
+        const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        
+        const newListing = allProperties.filter(property => {
+          const createdDate = new Date(property.createdAt);
+          return createdDate >= firstDayOfMonth;
+        }).length;
+
+        setDashboardStats({
+          propsSale,
+          propsRented,
+          noOfEmployees,
+          newListing
+        });
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        if (error.response && error.response.status === 401) {
+          setError('Session expired. Please login again.');
+        } else {
+          setError('Failed to load dashboard statistics');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -22,10 +106,34 @@ const dashboard = () => {
   ];
 
   const statsCards = [
-    { title: 'Props Sale', value: '684', subtitle: 'Total', color: 'from-blue-500 to-purple-600', icon: Building },
-    { title: 'Props Rented', value: '546', subtitle: 'Total', color: 'from-orange-500 to-red-500', icon: Home },
-    { title: 'New Listing', value: '12', subtitle: 'This month', color: 'from-green-500 to-teal-500', icon: Star },
-    { title: 'Price Drops', value: '9', subtitle: 'This month', color: 'from-pink-500 to-rose-500', icon: TrendingDown },
+    { 
+      title: 'Props Sale', 
+      value: loading ? '...' : dashboardStats.propsSale.toString(), 
+      subtitle: 'Total', 
+      color: 'from-blue-500 to-purple-600', 
+      icon: Building 
+    },
+    { 
+      title: 'Props Rented', 
+      value: loading ? '...' : dashboardStats.propsRented.toString(), 
+      subtitle: 'Monthly Rent', 
+      color: 'from-orange-500 to-red-500', 
+      icon: Home 
+    },
+    { 
+      title: 'No of Employees', 
+      value: loading ? '...' : dashboardStats.noOfEmployees.toString(), 
+      subtitle: 'Active', 
+      color: 'from-green-500 to-teal-500', 
+      icon: Users 
+    },
+    { 
+      title: 'New Listing', 
+      value: loading ? '...' : dashboardStats.newListing.toString(), 
+      subtitle: 'This month', 
+      color: 'from-pink-500 to-rose-500', 
+      icon: Star 
+    },
   ];
 
   const properties = [
@@ -74,7 +182,9 @@ const dashboard = () => {
         <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 my-6 mx-8 rounded-xl ">
           <div className="flex items-center justify-between px-5">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Welcome</h1>
+              <h1 className="text-3xl font-bold text-gray-800">
+                Welcome{currentUser ? `, ${currentUser.name}` : ''}
+              </h1>
               <p className="text-gray-500 mt-1">Here's what's happening with your properties</p>
             </div>
             <div className="flex items-center space-x-4">
@@ -83,11 +193,20 @@ const dashboard = () => {
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">HM</span>
+                <span className="text-white font-semibold text-sm">
+                  {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </span>
               </div>
             </div>
           </div>
         </header>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mx-8 mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p>{error}</p>
+          </div>
+        )}
 
         <div className="px-8 py-4 overflow-y-auto">
           {/* Stats Cards */}
