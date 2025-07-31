@@ -40,6 +40,7 @@ const AppRoutes = () => {
           <Route path = '/Test' element = {<Test/>}/>
           <Route path="/property/:id" element={<NavigateClick />} />
           <Route path = 'employee/layout' element = {<EmployeeLayout/>} />
+          <Route path = 'employee/dashboard' element = {<EmployeeLayout/>} />
           <Route path = 'employee/login' element = {<EmployeeLogin/>} />
           <Route path = '/forgotpass' element = {<ForgotPass/>} />
           <Route path = '/reset-password' element = {<ResetPassword/>} />

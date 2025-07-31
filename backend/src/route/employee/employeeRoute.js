@@ -10,7 +10,7 @@ import { authenticateToken } from '../../middleware/token-middleware.js';
 
 const router = express.Router();
 
-// All employee routes require authentication
+// All employee management routes require authentication (admin only)
 router.use(authenticateToken);
 
 // Create new employee

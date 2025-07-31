@@ -23,7 +23,12 @@ const login = async (req, res) => {
     // Compare password using bcrypt
     const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
     if (isPasswordValid) {
-      const token = generateToken({ user: user.toJSON() });
+      const token = generateToken({ 
+        user: user.toJSON(),
+        id: user.id,
+        email: user.email,
+        type: 'admin'
+      });
       // Send login notification email (non-blocking)
       sendLoginNotification(user.email).catch((err) => {
         console.error('Failed to send login notification email:', err);

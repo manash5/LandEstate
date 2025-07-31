@@ -14,7 +14,8 @@ export function authenticateToken(req, res, next) {
     '/api/auth/login',
     '/api/auth/forgot-password',
     '/api/auth/reset-password',
-    '/api/register'
+    '/api/register',
+    '/api/employee-auth/login'
   ];
   
   // Check if this is a public endpoint
