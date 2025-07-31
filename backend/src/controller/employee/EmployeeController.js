@@ -1,4 +1,4 @@
-import { Employee, User } from '../../models/index.js';
+import { Employee, User, Property, MaintenanceRecord } from '../../models/index.js';
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 import { 
@@ -239,10 +239,178 @@ const getEmployeeById = async (req, res) => {
     }
 };
 
+/**
+ * Get employee dashboard data
+ */
+const getEmployeeDashboard = async (req, res) => {
+    try {
+        const employeeId = req.employee.id;
+
+        // Get employee details
+        const employee = await Employee.findByPk(employeeId, {
+            attributes: { exclude: ['password'] }
+        });
+
+        if (!employee) {
+            return res.status(404).json({ 
+                success: false,
+                message: "Employee not found" 
+            });
+        }
+
+        // Get properties assigned to this employee
+        const assignedProperties = await Property.findAll({
+            where: { employeeId: employeeId },
+            attributes: ['id', 'name', 'location', 'price', 'priceDuration', 'type', 'beds', 'baths', 'areaSqm', 'mainImage']
+        });
+
+        // Get maintenance records for assigned properties
+        const propertyIds = assignedProperties.map(prop => prop.id);
+        const maintenanceRecords = propertyIds.length > 0 ? await MaintenanceRecord.findAll({
+            where: { 
+                propertyId: { [Op.in]: propertyIds }
+            },
+            order: [['serviceDate', 'DESC']],
+            limit: 10
+        }) : [];
+
+        // Calculate dashboard statistics
+        const totalProperties = assignedProperties.length;
+        const totalRooms = assignedProperties.length; // Using property count as room count for now
+        const occupiedRooms = assignedProperties.length; // Assuming all properties are occupied for now
+        const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+        
+        // Count open issues (maintenance records with status not completed)
+        const openIssues = maintenanceRecords.filter(record => record.status !== 'completed').length;
+        
+        // Calculate monthly revenue from assigned properties
+        const monthlyRevenue = assignedProperties.reduce((sum, prop) => {
+            if (prop.priceDuration === 'per month') {
+                return sum + parseFloat(prop.price || 0);
+            }
+            return sum;
+        }, 0);
+
+        // Get recent maintenance activities
+        const recentActivities = maintenanceRecords.slice(0, 5).map(record => ({
+            id: record.id,
+            type: 'maintenance',
+            message: `${record.serviceName}: ${record.description || 'Maintenance service'}`,
+            timestamp: record.serviceDate,
+            priority: record.status === 'pending' ? 'high' : 'normal'
+        }));
+
+        const dashboardData = {
+            employee: {
+                id: employee.id,
+                name: employee.name,
+                email: employee.email,
+                role: employee.role || 'Property Manager',
+                department: employee.department || 'Operations'
+            },
+            stats: {
+                totalProperties,
+                totalRooms,
+                occupiedRooms,
+                occupancyRate,
+                openIssues,
+                monthlyRevenue
+            },
+            properties: assignedProperties,
+            recentActivities,
+            maintenanceRecords: maintenanceRecords.slice(0, 10)
+        };
+
+        res.status(200).json({
+            success: true,
+            data: dashboardData,
+            message: "Dashboard data fetched successfully"
+        });
+
+    } catch (error) {
+        console.error('Error fetching employee dashboard:', error);
+        res.status(500).json({ 
+            success: false,
+            message: "Failed to fetch dashboard data" 
+        });
+    }
+};
+
+/**
+ * Get assigned properties for employee
+ */
+const getAssignedProperties = async (req, res) => {
+    try {
+        const employeeId = req.employee.id;
+
+        const properties = await Property.findAll({
+            where: { employeeId: employeeId },
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.status(200).json({
+            success: true,
+            data: properties,
+            message: "Assigned properties fetched successfully"
+        });
+
+    } catch (error) {
+        console.error('Error fetching assigned properties:', error);
+        res.status(500).json({ 
+            success: false,
+            message: "Failed to fetch assigned properties" 
+        });
+    }
+};
+
+/**
+ * Get maintenance records for employee's properties
+ */
+const getMaintenanceRecords = async (req, res) => {
+    try {
+        const employeeId = req.employee.id;
+
+        // Get property IDs assigned to this employee
+        const assignedProperties = await Property.findAll({
+            where: { employeeId: employeeId },
+            attributes: ['id']
+        });
+
+        const propertyIds = assignedProperties.map(prop => prop.id);
+
+        const maintenanceRecords = propertyIds.length > 0 ? await MaintenanceRecord.findAll({
+            where: { 
+                propertyId: { [Op.in]: propertyIds }
+            },
+            include: [{
+                model: Property,
+                attributes: ['name']
+            }],
+            order: [['serviceDate', 'DESC']]
+        }) : [];
+
+        res.status(200).json({
+            success: true,
+            data: maintenanceRecords,
+            message: "Maintenance records fetched successfully"
+        });
+
+    } catch (error) {
+        console.error('Error fetching maintenance records:', error);
+        res.status(500).json({ 
+            success: false,
+            message: "Failed to fetch maintenance records" 
+        });
+    }
+};
+
 export {
     createEmployee,
     getEmployees,
     updateEmployee,
     deleteEmployee,
-    getEmployeeById
+    getEmployeeById,
+    getEmployeeDashboard,
+    getAssignedProperties,
+    getMaintenanceRecords
 };

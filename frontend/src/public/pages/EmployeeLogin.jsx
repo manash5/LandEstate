@@ -36,7 +36,7 @@ const EmployeeLogin = () => {
       
       if (response.data?.success) {
         // Store token and user data
-        localStorage.setItem('token', response.data.data.token);
+        localStorage.setItem('employeeToken', response.data.data.token);
         localStorage.setItem('userType', 'employee');
         localStorage.setItem('employeeData', JSON.stringify(response.data.data.employee));
         

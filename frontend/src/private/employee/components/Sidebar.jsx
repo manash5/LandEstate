@@ -12,6 +12,26 @@ import {
 
 const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [employeeData, setEmployeeData] = useState(null);
+
+  // Get employee data from localStorage and API
+  useEffect(() => {
+    const loadEmployeeData = () => {
+      const storedEmployeeData = localStorage.getItem('employeeData');
+      if (storedEmployeeData) {
+        setEmployeeData(JSON.parse(storedEmployeeData));
+      }
+    };
+
+    loadEmployeeData();
+    
+    // Listen for storage changes (when user logs in/out in another tab)
+    window.addEventListener('storage', loadEmployeeData);
+    
+    return () => {
+      window.removeEventListener('storage', loadEmployeeData);
+    };
+  }, []);
 
   const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
@@ -34,6 +54,12 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
     if (onCollapse) {
       onCollapse(newCollapsedState);
     }
+  };
+
+  // Get first letter of name for avatar
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
   };
 
   return (
@@ -74,12 +100,12 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
             isCollapsed ? 'justify-center' : ''
           }`}>
             <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 m-0">
-              <span className="text-white font-semibold text-sm">U</span>
+              <span className="text-white font-semibold text-sm">{getInitials(employeeData?.name)}</span>
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0 items-center justify-center">
-                <p className="text-sm font-medium text-white truncate m-0">User Name</p>
-                <p className="text-xs text-gray-400 truncate m-0">user@example.com</p>
+                <p className="text-sm font-medium text-white truncate m-0">{employeeData?.name || 'Employee'}</p>
+                <p className="text-xs text-gray-400 truncate m-0">{employeeData?.email || 'employee@landestate.com'}</p>
               </div>
             )}
           </div>

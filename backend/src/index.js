@@ -24,13 +24,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true })); // Add this for form submissions
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/photos/upload', express.static(path.join(process.cwd(), 'uploads')));
-app.use(authenticateToken);
-app.use("/api/register", registerRouter)
-app.use("/api/users", userRouter);
-app.use('/api/properties', propertyRouter)
+
+// Routes that don't need authentication
+app.use("/api/register", registerRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/employee-auth", employeeAuthRouter);
-app.use("/api/messages", messageRouter);
+
+// Apply token middleware only to specific routes that need user authentication
+app.use("/api/users", authenticateToken, userRouter);
+app.use('/api/properties', authenticateToken, propertyRouter);
+app.use("/api/messages", authenticateToken, messageRouter);
+
+// Employee routes (have their own authentication)
 app.use("/api/employees", employeeRouter);
 app.use("/api/file", router);
 

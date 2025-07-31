@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, User, Phone, DollarSign, MapPin, Edit3, X } from 'lucide-react';
-import { properties } from '../data/mockdata';
+import { Search, User, Phone, DollarSign, MapPin, Edit3, X, Calendar, Mail, AlertTriangle } from 'lucide-react';
+import { properties, tenants } from '../data/mockdata';
 
 const TenantsOverview = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,22 +9,14 @@ const TenantsOverview = () => {
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editedTenant, setEditedTenant] = useState(null);
-  const [propertiesData, setPropertiesData] = useState(properties);
+  const [tenantsData, setTenantsData] = useState(tenants);
 
-  // Flatten all tenants from all properties
-  const allTenants = propertiesData.flatMap(property => 
-    property.rooms.map(room => ({
-      ...room,
-      propertyName: property.name,
-      propertyId: property.id
-    }))
-  );
-
-  const filteredTenants = allTenants.filter(tenant => {
-    const matchesSearch = tenant.tenant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tenant.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tenant.propertyName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || tenant.status === statusFilter;
+  const filteredTenants = tenantsData.filter(tenant => {
+    const matchesSearch = tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         tenant.roomNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         tenant.propertyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         tenant.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || tenant.paymentStatus === statusFilter;
     const matchesProperty = propertyFilter === 'all' || tenant.propertyId.toString() === propertyFilter;
     return matchesSearch && matchesStatus && matchesProperty;
   });
@@ -40,34 +32,27 @@ const TenantsOverview = () => {
   };
 
   const handleSaveEdit = () => {
-    // Update the properties data with the edited tenant information
-    const updatedProperties = propertiesData.map(property => {
-      if (property.id === editedTenant.propertyId) {
+    // Update the tenants data with the edited tenant information
+    const updatedTenants = tenantsData.map(tenant => {
+      if (tenant.id === editedTenant.id) {
         return {
-          ...property,
-          rooms: property.rooms.map(room => {
-            if (room.id === editedTenant.id) {
-              return {
-                ...room,
-                tenant: editedTenant.tenant,
-                tenantContact: editedTenant.tenantContact,
-                number: editedTenant.number,
-                rent: editedTenant.rent,
-                status: editedTenant.status,
-                rentDueDate: editedTenant.rentDueDate,
-                issue: editedTenant.issue,
-                lastUpdated: new Date().toISOString().split('T')[0] // Update the last updated date
-              };
-            }
-            return room;
-          })
+          ...tenant,
+          name: editedTenant.name,
+          phone: editedTenant.phone,
+          email: editedTenant.email,
+          roomNumber: editedTenant.roomNumber,
+          rentAmount: editedTenant.rentAmount,
+          paymentStatus: editedTenant.paymentStatus,
+          rentDueDate: editedTenant.rentDueDate,
+          issue: editedTenant.issue,
+          lastUpdated: new Date().toISOString().split('T')[0]
         };
       }
-      return property;
+      return tenant;
     });
 
     // Update the state with the new data
-    setPropertiesData(updatedProperties);
+    setTenantsData(updatedTenants);
     
     // Close the modal and reset states
     setShowEditModal(false);
@@ -115,8 +100,20 @@ const TenantsOverview = () => {
                   </label>
                   <input
                     type="text"
-                    value={editedTenant.tenant}
-                    onChange={(e) => handleInputChange('tenant', e.target.value)}
+                    value={editedTenant.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={editedTenant.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -127,8 +124,8 @@ const TenantsOverview = () => {
                   </label>
                   <input
                     type="text"
-                    value={editedTenant.tenantContact}
-                    onChange={(e) => handleInputChange('tenantContact', e.target.value)}
+                    value={editedTenant.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -139,20 +136,20 @@ const TenantsOverview = () => {
                   </label>
                   <input
                     type="text"
-                    value={editedTenant.number}
-                    onChange={(e) => handleInputChange('number', e.target.value)}
+                    value={editedTenant.roomNumber}
+                    onChange={(e) => handleInputChange('roomNumber', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rent Amount (NPR)
+                    Rent Amount ($)
                   </label>
                   <input
                     type="number"
-                    value={editedTenant.rent}
-                    onChange={(e) => handleInputChange('rent', parseInt(e.target.value))}
+                    value={editedTenant.rentAmount}
+                    onChange={(e) => handleInputChange('rentAmount', parseFloat(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -162,8 +159,8 @@ const TenantsOverview = () => {
                     Payment Status
                   </label>
                   <select
-                    value={editedTenant.status}
-                    onChange={(e) => handleInputChange('status', e.target.value)}
+                    value={editedTenant.paymentStatus}
+                    onChange={(e) => handleInputChange('paymentStatus', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="paid">Paid</option>
@@ -171,7 +168,7 @@ const TenantsOverview = () => {
                   </select>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Rent Due Date
                   </label>
@@ -219,7 +216,8 @@ const TenantsOverview = () => {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4">
+      {/* Header */}
       <div className="bg-slate-100 p-6 rounded-xl relative overflow-hidden">
         <div className="relative z-10">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-700 bg-clip-text text-transparent mb-1">
@@ -228,12 +226,55 @@ const TenantsOverview = () => {
           <p className="text-gray-600 text-lg font-medium">
             Manage all tenants across your assigned properties
           </p>
-          
-          <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mt-2"></div>
+          <div className="w-20 h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mt-2"></div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600">
+              <User className="w-6 h-6" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800">{tenantsData.length}</h3>
+          <p className="text-gray-600 text-sm">Total Tenants</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-green-50 to-green-100 text-green-600">
+              <DollarSign className="w-6 h-6" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800">{tenantsData.filter(t => t.paymentStatus === 'paid').length}</h3>
+          <p className="text-gray-600 text-sm">Paid This Month</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-red-50 to-red-100 text-red-600">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800">{tenantsData.filter(t => t.paymentStatus === 'unpaid').length}</h3>
+          <p className="text-gray-600 text-sm">Unpaid</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 text-orange-600">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800">{tenantsData.filter(t => t.issue).length}</h3>
+          <p className="text-gray-600 text-sm">With Issues</p>
+        </div>
+      </div>
+
+      {/* Filters and Search */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -242,13 +283,13 @@ const TenantsOverview = () => {
               placeholder="Search tenants, rooms, or properties..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="pl-10 pr-4 py-2 w-full border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Payment Status</option>
             <option value="paid">Paid</option>
@@ -257,7 +298,7 @@ const TenantsOverview = () => {
           <select
             value={propertyFilter}
             onChange={(e) => setPropertyFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Properties</option>
             {properties.map(property => (
@@ -283,20 +324,27 @@ const TenantsOverview = () => {
             </thead>
             <tbody>
               {filteredTenants.map((tenant) => (
-                <tr key={`${tenant.propertyId}-${tenant.id}`} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr key={tenant.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-4 px-4">
                     <div className="flex items-center">
-                      <User className="w-8 h-8 p-2 bg-gray-100 rounded-full mr-3" />
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3">
+                        <span className="text-white font-semibold text-sm">
+                          {tenant.name.split(' ').map(n => n[0]).join('')}
+                        </span>
+                      </div>
                       <div>
-                        <p className="font-medium text-gray-800">{tenant.tenant}</p>
-                        <p className="text-sm text-gray-500">ID: {tenant.id}</p>
+                        <p className="font-medium text-gray-800">{tenant.name}</p>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Mail className="w-3 h-3 mr-1" />
+                          {tenant.email}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center">
                       <Phone className="w-4 h-4 text-gray-400 mr-2" />
-                      <span className="text-gray-700">{tenant.tenantContact}</span>
+                      <span className="text-gray-700">{tenant.phone}</span>
                     </div>
                   </td>
                   <td className="py-4 px-4">
@@ -304,7 +352,7 @@ const TenantsOverview = () => {
                       <MapPin className="w-4 h-4 text-gray-400 mr-2" />
                       <div>
                         <p className="font-medium text-gray-800">{tenant.propertyName}</p>
-                        <p className="text-sm text-gray-500">Room {tenant.number}</p>
+                        <p className="text-sm text-gray-500">Room {tenant.roomNumber}</p>
                       </div>
                     </div>
                   </td>
@@ -312,29 +360,35 @@ const TenantsOverview = () => {
                     <div className="flex items-center">
                       <DollarSign className="w-4 h-4 text-gray-400 mr-1" />
                       <div>
-                        <p className="font-medium text-gray-800">NPR {tenant.rent.toLocaleString()}</p>
-                        <p className="text-sm text-gray-500">Due: {new Date(tenant.rentDueDate).toLocaleDateString()}</p>
+                        <p className="font-medium text-gray-800">${tenant.rentAmount.toLocaleString()}</p>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          Due: {new Date(tenant.rentDueDate).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(tenant.status)}`}>
-                      {tenant.status === 'paid' ? 'PAID' : 'NOT PAID'}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(tenant.paymentStatus)}`}>
+                      {tenant.paymentStatus === 'paid' ? 'PAID' : 'UNPAID'}
                     </span>
                   </td>
                   <td className="py-4 px-4">
                     {tenant.issue ? (
-                      <span className="text-orange-600 text-sm">{tenant.issue}</span>
+                      <div className="flex items-center">
+                        <AlertTriangle className="w-4 h-4 text-orange-500 mr-2" />
+                        <span className="text-orange-600 text-sm">{tenant.issue}</span>
+                      </div>
                     ) : (
-                      <span className="text-green-600 text-sm">No Issue</span>
+                      <span className="text-green-600 text-sm">No Issues</span>
                     )}
                   </td>
                   <td className="py-4 px-4">
                     <button 
                       onClick={() => handleEditClick(tenant)}
-                      className="flex items-center space-x-1 bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-lg transition-colors text-sm"
+                      className="flex items-center space-x-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg transition-colors text-sm"
                     >
-                      <Edit3 className="w-3 h-3" />
+                      <Edit3 className="w-4 h-4" />
                       <span>Edit</span>
                     </button>
                   </td>

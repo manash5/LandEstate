@@ -188,8 +188,41 @@ export const employeeLogin = (credentials) => {
 
 // Get current employee
 export const getCurrentEmployee = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('employeeToken');
   return axios.get(`${EMPLOYEE_AUTH_API}/current`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Employee Dashboard API
+const EMPLOYEE_DASHBOARD_API = 'http://localhost:4000/api/employees/dashboard';
+
+// Get employee dashboard data
+export const getEmployeeDashboard = () => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.get(EMPLOYEE_DASHBOARD_API, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Get assigned properties for employee
+export const getEmployeeAssignedProperties = () => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.get(`${EMPLOYEE_DASHBOARD_API}/properties`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Get maintenance records for employee's properties
+export const getEmployeeMaintenanceRecords = () => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.get(`${EMPLOYEE_DASHBOARD_API}/maintenance`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }

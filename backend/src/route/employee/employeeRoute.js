@@ -4,28 +4,28 @@ import {
     getEmployees,
     updateEmployee,
     deleteEmployee,
-    getEmployeeById
+    getEmployeeById,
+    getEmployeeDashboard,
+    getAssignedProperties,
+    getMaintenanceRecords
 } from '../../controller/employee/EmployeeController.js';
 import { authenticateToken } from '../../middleware/token-middleware.js';
+import { authenticateEmployee } from '../../middleware/employee-auth-middleware.js';
 
 const router = express.Router();
 
-// All employee management routes require authentication (admin only)
-router.use(authenticateToken);
+// Admin routes for employee management (require admin auth)
+router.use('/manage', authenticateToken);
+router.post('/manage', createEmployee);
+router.get('/manage', getEmployees);
+router.get('/manage/:id', getEmployeeById);
+router.put('/manage/:id', updateEmployee);
+router.delete('/manage/:id', deleteEmployee);
 
-// Create new employee
-router.post('/', createEmployee);
-
-// Get all employees for the logged-in manager
-router.get('/', getEmployees);
-
-// Get employee by ID
-router.get('/:id', getEmployeeById);
-
-// Update employee
-router.put('/:id', updateEmployee);
-
-// Delete employee
-router.delete('/:id', deleteEmployee);
+// Employee dashboard routes (require employee auth)
+router.use('/dashboard', authenticateEmployee);
+router.get('/dashboard', getEmployeeDashboard);
+router.get('/dashboard/properties', getAssignedProperties);
+router.get('/dashboard/maintenance', getMaintenanceRecords);
 
 export default router;
