@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import PropertyCard from './propertyCard';
+import PropertyCard from './PropertyCard';
 import StatsCard from './StatsCard';
 import { getEmployeeDashboard } from '../../../services/api';
 import { Building, Users, AlertTriangle, CheckCircle, Loader } from 'lucide-react';

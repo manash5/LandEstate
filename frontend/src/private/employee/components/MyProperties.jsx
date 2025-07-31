@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import PropertyCard from '../components/propertyCard';
+import PropertyCard from './PropertyCard';
 import { getEmployeeAssignedProperties } from '../../../services/api';
 import { Building, Loader, AlertTriangle } from 'lucide-react';
 
