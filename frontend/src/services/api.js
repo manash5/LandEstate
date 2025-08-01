@@ -258,3 +258,40 @@ export const transferPropertyOwnership = (propertyId, newOwnerName) => {
     }
   });
 };
+
+// Room management APIs
+export const createRoom = (propertyId, roomData) => {
+  const token = localStorage.getItem('employeeToken') || localStorage.getItem('token');
+  return axios.post(`http://localhost:4000/api/rooms/property/${propertyId}/rooms`, roomData, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+export const getRoomsByProperty = (propertyId) => {
+  const token = localStorage.getItem('employeeToken') || localStorage.getItem('token');
+  return axios.get(`http://localhost:4000/api/rooms/property/${propertyId}/rooms`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+export const updateRoom = (roomId, roomData) => {
+  const token = localStorage.getItem('employeeToken') || localStorage.getItem('token');
+  return axios.put(`http://localhost:4000/api/rooms/rooms/${roomId}`, roomData, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+export const deleteRoom = (roomId) => {
+  const token = localStorage.getItem('employeeToken') || localStorage.getItem('token');
+  return axios.delete(`http://localhost:4000/api/rooms/rooms/${roomId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};

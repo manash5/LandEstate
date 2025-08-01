@@ -10,7 +10,9 @@ const dashboard = () => {
     propsSale: 0,
     propsRented: 0,
     noOfEmployees: 0,
-    newListing: 0
+    newListing: 0,
+    totalRooms: 0,
+    occupiedRooms: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,6 +54,18 @@ const dashboard = () => {
           property.priceDuration && property.priceDuration.toLowerCase().includes('month')
         ).length;
 
+        // Calculate total rooms and occupancy across all properties
+        const totalRooms = userProperties.reduce((sum, property) => {
+          return sum + (property.rooms ? property.rooms.length : 0);
+        }, 0);
+
+        const occupiedRooms = userProperties.reduce((sum, property) => {
+          if (property.rooms) {
+            return sum + property.rooms.filter(room => room.status !== 'vacant').length;
+          }
+          return sum;
+        }, 0);
+
         // 3. No of Employees - Get all employees (assuming they belong to the current user)
         let noOfEmployees = 0;
         try {
@@ -78,6 +92,8 @@ const dashboard = () => {
         setDashboardStats({
           propsSale,
           propsRented,
+          totalRooms,
+          occupiedRooms,
           noOfEmployees,
           newListing
         });
@@ -177,6 +193,13 @@ const dashboard = () => {
       subtitle: 'Monthly Rent', 
       color: 'from-orange-500 to-red-500', 
       icon: Home 
+    },
+    { 
+      title: 'Total Rooms', 
+      value: loading ? '...' : dashboardStats.totalRooms.toString(), 
+      subtitle: `${dashboardStats.occupiedRooms} Occupied`, 
+      color: 'from-indigo-500 to-blue-600', 
+      icon: Users 
     },
     { 
       title: 'No of Employees', 

@@ -87,6 +87,7 @@ const MyProperties = ({ setSelectedRoom }) => {
                 key={property.id} 
                 property={property} 
                 setSelectedRoom={setSelectedRoom}
+                onRefresh={fetchAssignedProperties}
               />
             ))}
           </div>

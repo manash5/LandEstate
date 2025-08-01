@@ -9,6 +9,7 @@ import router from "./route/uploadRoutes.js";
 import { createUploadsFolder } from "./security/helper.js";
 import {propertyRouter} from './route/index.js'; 
 import { messageRouter } from './route/index.js';
+import { roomRouter } from './route/index.js';
 import employeeRouter from './route/employee/employeeRoute.js';
 import employeeAuthRouter from './route/auth/employeeAuthRoute.js';
 import { registerRouter } from "./route/register/registerRoute.js";
@@ -34,6 +35,7 @@ app.use("/api/employee-auth", employeeAuthRouter);
 app.use("/api/users", authenticateToken, userRouter);
 app.use('/api/properties', authenticateToken, propertyRouter);
 app.use("/api/messages", authenticateToken, messageRouter);
+app.use("/api/rooms", authenticateToken, roomRouter);
 
 // Employee routes (have their own authentication)
 app.use("/api/employees", employeeRouter);

@@ -2,13 +2,22 @@ import React, { useState } from 'react';
 import { MapPin, Users, Calendar, Eye } from 'lucide-react';
 import RoomsModal from './RoomModal';
 
-const PropertyCard = ({ property, setSelectedRoom }) => {
+const PropertyCard = ({ property, setSelectedRoom, onRefresh }) => {
   const [showRooms, setShowRooms] = useState(false);
 
-  // Since the database doesn't have occupiedRooms/totalRooms, we'll use placeholder values
-  const totalRooms = property.totalRooms || property.beds || 1; // Fallback to beds or 1
-  const occupiedRooms = property.occupiedRooms || Math.floor(totalRooms * 0.8); // Assume 80% occupancy
-  const occupancyRate = (occupiedRooms / totalRooms) * 100;
+  // Since properties start with 0 rooms by default, we'll get actual room count from property.rooms
+  const actualRooms = property.rooms ? property.rooms.length : 0;
+  const totalRooms = actualRooms || 0; // Always show actual room count
+  const occupiedRooms = property.rooms ? property.rooms.filter(room => room.status !== 'vacant').length : 0;
+  const occupancyRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
+
+  const handleCloseRooms = () => {
+    setShowRooms(false);
+    // Refresh parent data when rooms modal closes
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
 
   return (
     <>
@@ -20,7 +29,7 @@ const PropertyCard = ({ property, setSelectedRoom }) => {
             className="w-full h-48 object-cover"
           />
           <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 text-sm font-semibold text-gray-700">
-            {occupiedRooms}/{totalRooms} rooms
+            {totalRooms} {totalRooms === 1 ? 'room' : 'rooms'}
           </div>
         </div>
 
@@ -35,7 +44,7 @@ const PropertyCard = ({ property, setSelectedRoom }) => {
             
             <div className="flex items-center text-gray-600">
               <Users className="w-4 h-4 mr-2" />
-              <span className="text-sm">{totalRooms} total rooms</span>
+              <span className="text-sm">{totalRooms} total rooms ({occupiedRooms} occupied)</span>
             </div>
             
             <div className="flex items-center text-gray-600">
@@ -47,12 +56,12 @@ const PropertyCard = ({ property, setSelectedRoom }) => {
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
               <span>Occupancy Rate</span>
-              <span>{occupancyRate.toFixed(0)}%</span>
+              <span>{totalRooms > 0 ? occupancyRate.toFixed(0) : 0}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${occupancyRate}%` }}
+                style={{ width: `${totalRooms > 0 ? occupancyRate : 0}%` }}
               ></div>
             </div>
           </div>
@@ -62,7 +71,7 @@ const PropertyCard = ({ property, setSelectedRoom }) => {
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
           >
             <Eye className="w-4 h-4" />
-            <span>View Rooms</span>
+            <span>{totalRooms === 0 ? 'Add Rooms' : 'View Rooms'}</span>
           </button>
         </div>
       </div>
@@ -70,7 +79,7 @@ const PropertyCard = ({ property, setSelectedRoom }) => {
       {showRooms && (
         <RoomsModal 
           property={property}
-          onClose={() => setShowRooms(false)}
+          onClose={handleCloseRooms}
           setSelectedRoom={setSelectedRoom}
         />
       )}

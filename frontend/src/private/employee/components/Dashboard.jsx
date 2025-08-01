@@ -134,6 +134,7 @@ const Dashboard = ({ setSelectedRoom }) => {
                 key={property.id} 
                 property={property} 
                 setSelectedRoom={setSelectedRoom}
+                onRefresh={fetchDashboardData}
               />
             ))}
           </div>

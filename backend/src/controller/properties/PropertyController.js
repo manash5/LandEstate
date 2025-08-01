@@ -17,6 +17,11 @@ const getAll = async (req, res) => {
                     as: 'employee',
                     attributes: ['id', 'name', 'email', 'phone'],
                     required: false // This makes it a LEFT JOIN so properties without employees are still included
+                },
+                {
+                    model: Room,
+                    as: 'rooms',
+                    required: false
                 }
             ]
         });
@@ -182,6 +187,11 @@ const getByUserId = async (req, res) => {
                     model: Employee,
                     as: 'employee',
                     attributes: ['id', 'name', 'email', 'phone'],
+                    required: false
+                },
+                {
+                    model: Room,
+                    as: 'rooms',
                     required: false
                 }
             ]

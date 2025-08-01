@@ -1,4 +1,4 @@
-import { Employee, User, Property, MaintenanceRecord } from '../../models/index.js';
+import { Employee, User, Property, MaintenanceRecord, Room } from '../../models/index.js';
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 import { 
@@ -258,11 +258,27 @@ const getEmployeeDashboard = async (req, res) => {
             });
         }
 
-        // Get properties assigned to this employee
-        const assignedProperties = await Property.findAll({
-            where: { employeeId: employeeId },
-            attributes: ['id', 'name', 'location', 'price', 'priceDuration', 'type', 'beds', 'baths', 'areaSqm', 'mainImage']
-        });
+        // Get properties assigned to this employee with their rooms
+        let assignedProperties;
+        try {
+            assignedProperties = await Property.findAll({
+                where: { employeeId: employeeId },
+                attributes: ['id', 'name', 'location', 'price', 'priceDuration', 'type', 'beds', 'baths', 'areaSqm', 'mainImage'],
+                include: [{
+                    model: Room,
+                    as: 'rooms',
+                    required: false, // LEFT JOIN to include properties even if they have no rooms
+                    attributes: ['id', 'number', 'status', 'tenant', 'tenantContact', 'rent']
+                }]
+            });
+        } catch (includeError) {
+            console.log('Error including rooms, falling back to properties only:', includeError);
+            // Fallback: fetch properties without rooms if association fails
+            assignedProperties = await Property.findAll({
+                where: { employeeId: employeeId },
+                attributes: ['id', 'name', 'location', 'price', 'priceDuration', 'type', 'beds', 'baths', 'areaSqm', 'mainImage']
+            });
+        }
 
         // Get maintenance records for assigned properties
         const propertyIds = assignedProperties.map(prop => prop.id);
@@ -274,10 +290,17 @@ const getEmployeeDashboard = async (req, res) => {
             limit: 10
         }) : [];
 
-        // Calculate dashboard statistics
+        // Calculate dashboard statistics with actual room counts
         const totalProperties = assignedProperties.length;
-        const totalRooms = assignedProperties.length; // Using property count as room count for now
-        const occupiedRooms = assignedProperties.length; // Assuming all properties are occupied for now
+        const totalRooms = assignedProperties.reduce((sum, property) => {
+            return sum + (property.rooms ? property.rooms.length : 0);
+        }, 0);
+        const occupiedRooms = assignedProperties.reduce((sum, property) => {
+            if (property.rooms) {
+                return sum + property.rooms.filter(room => room.status !== 'vacant').length;
+            }
+            return sum;
+        }, 0);
         const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
         
         // Count open issues (maintenance records with status not completed)
@@ -345,6 +368,13 @@ const getAssignedProperties = async (req, res) => {
 
         const properties = await Property.findAll({
             where: { employeeId: employeeId },
+            include: [
+                {
+                    model: Room,
+                    as: 'rooms',
+                    required: false
+                }
+            ],
             order: [['createdAt', 'DESC']]
         });
 
