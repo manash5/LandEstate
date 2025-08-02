@@ -129,7 +129,7 @@ const ServiceRecords = () => {
               <DollarSign className="w-6 h-6" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">${totalCost.toLocaleString()}</h3>
+          <h3 className="text-2xl font-bold text-gray-800">₹{totalCost.toLocaleString()}</h3>
           <p className="text-gray-600 text-sm">Total Cost</p>
         </div>
 
@@ -139,7 +139,7 @@ const ServiceRecords = () => {
               <Calendar className="w-6 h-6" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-gray-800">${Math.round(avgCost).toLocaleString()}</h3>
+          <h3 className="text-2xl font-bold text-gray-800">₹{Math.round(avgCost).toLocaleString()}</h3>
           <p className="text-gray-600 text-sm">Avg Cost</p>
         </div>
       </div>
@@ -242,7 +242,7 @@ const ServiceRecords = () => {
                     <p className="text-sm text-gray-800 max-w-xs truncate">{record.description}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-semibold text-gray-800">${record.cost.toLocaleString()}</span>
+                    <span className="font-semibold text-gray-800">₹{record.cost.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -309,7 +309,7 @@ const ServiceRecords = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-600 mb-2">Cost</label>
-                  <p className="text-gray-800 font-bold text-lg">${selectedRecord.cost.toLocaleString()}</p>
+                  <p className="text-gray-800 font-bold text-lg">₹{selectedRecord.cost.toLocaleString()}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-600 mb-2">Status</label>

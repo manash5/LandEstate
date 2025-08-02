@@ -47,7 +47,7 @@ const MyListing = () => {
     id: property.id,
     name: property.name,
     location: property.location,
-    price: `$${property.price}/${property.priceDuration}`,
+    price: `₹${property.price}/${property.priceDuration}`,
     image: property.mainImage || 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'
   });
 

@@ -333,7 +333,7 @@ const PropertyDetailsPage = () => {
       selector: 'rent',
       cell: (row) => (
         <span className="font-medium">
-          {row.rent && parseFloat(row.rent) > 0 ? `Rs. ${parseFloat(row.rent).toLocaleString()}` : 'N/A'}
+          {row.rent && parseFloat(row.rent) > 0 ? `₹ ${parseFloat(row.rent).toLocaleString()}` : 'N/A'}
         </span>
       ),
     },
@@ -410,7 +410,7 @@ const PropertyDetailsPage = () => {
     {
       name: 'Cost',
       selector: 'cost',
-      cell: (row) => row.cost && parseFloat(row.cost) > 0 ? `Rs. ${parseFloat(row.cost).toLocaleString()}` : 'N/A',
+      cell: (row) => row.cost && parseFloat(row.cost) > 0 ? `₹ ${parseFloat(row.cost).toLocaleString()}` : 'N/A',
     },
     {
       name: 'Technician',
@@ -607,7 +607,7 @@ const PropertyDetailsPage = () => {
                       </select>
                     </div>
                   ) : (
-                    <div className="font-medium">Rs. {parseFloat(propertyData.price).toLocaleString()}/{propertyData.priceDuration}</div>
+                    <div className="font-medium">₹ {parseFloat(propertyData.price).toLocaleString()}/{propertyData.priceDuration}</div>
                   )}
                 </div>
 
@@ -775,7 +775,7 @@ const PropertyDetailsPage = () => {
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Monthly Rent</p>
-                      <p className="text-2xl font-bold text-gray-900">Rs. {stats.totalRent.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-gray-900">₹ {stats.totalRent.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>

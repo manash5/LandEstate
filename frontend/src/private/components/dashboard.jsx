@@ -117,28 +117,28 @@ const dashboard = () => {
 
         // Calculate price range distribution
         const priceRanges = {
-          'Under $200K': 0,
-          '$200K - $400K': 0,
-          '$400K - $600K': 0,
-          '$600K - $800K': 0,
-          '$800K - $1M': 0,
-          'Over $1M': 0
+          'Under ₹200K': 0,
+          '₹200K - ₹400K': 0,
+          '₹400K - ₹600K': 0,
+          '₹600K - ₹800K': 0,
+          '₹800K - ₹1M': 0,
+          'Over ₹1M': 0
         };
 
         allProperties.forEach(property => {
           const price = parseFloat(property.price) || 0;
           if (price < 200000) {
-            priceRanges['Under $200K']++;
+            priceRanges['Under ₹200K']++;
           } else if (price < 400000) {
-            priceRanges['$200K - $400K']++;
+            priceRanges['₹200K - ₹400K']++;
           } else if (price < 600000) {
-            priceRanges['$400K - $600K']++;
+            priceRanges['₹400K - ₹600K']++;
           } else if (price < 800000) {
-            priceRanges['$600K - $800K']++;
+            priceRanges['₹600K - ₹800K']++;
           } else if (price < 1000000) {
-            priceRanges['$800K - $1M']++;
+            priceRanges['₹800K - ₹1M']++;
           } else {
-            priceRanges['Over $1M']++;
+            priceRanges['Over ₹1M']++;
           }
         });
 
@@ -331,11 +331,11 @@ const dashboard = () => {
                         )}
                       </div>
                       <div className="flex justify-between text-xs text-gray-500 mt-2">
-                        <span>&lt;$200K</span>
-                        <span>$400K</span>
-                        <span>$600K</span>
-                        <span>$800K</span>
-                        <span>$1M+</span>
+                        <span>&lt;₹200K</span>
+                        <span>₹400K</span>
+                        <span>₹600K</span>
+                        <span>₹800K</span>
+                        <span>₹1M+</span>
                       </div>
                     </div>
                   </div>
@@ -352,7 +352,7 @@ const dashboard = () => {
                   </div>
                 </div>
                 <div className="mb-4">
-                  <p className="text-3xl font-bold text-gray-800">$236,535</p>
+                  <p className="text-3xl font-bold text-gray-800">₹236,535</p>
                   <p className="text-gray-500 text-sm">Total Revenue</p>
                 </div>
                 <div className="h-48 bg-gradient-to-t from-blue-50 to-transparent rounded-xl flex items-end justify-center p-4">
@@ -410,7 +410,7 @@ const dashboard = () => {
                         <p className="text-gray-500 text-xs mb-2">{property.location}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-blue-600 font-bold text-sm">
-                            ${Number(property.price).toLocaleString()}{property.priceDuration ? `/${property.priceDuration}` : ''}
+                            ₹{Number(property.price).toLocaleString()}{property.priceDuration ? `/${property.priceDuration}` : ''}
                           </span>
                           <div className="flex items-center space-x-2 text-gray-400">
                             <div className="flex items-center space-x-1">

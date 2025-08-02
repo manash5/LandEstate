@@ -76,7 +76,7 @@ const TenantsOverview = ({ properties }) => {
 
   const formatRent = (rent) => {
     if (!rent || rent === 0) return 'Not set';
-    return `NPR ${parseFloat(rent).toLocaleString()}`;
+    return `₹ ${parseFloat(rent).toLocaleString()}`;
   };
 
   const totalTenants = tenants.length;
@@ -130,7 +130,7 @@ const TenantsOverview = ({ properties }) => {
               <DollarSign className="w-5 h-5 text-purple-600 mr-2" />
               <div>
                 <p className="text-sm text-purple-600 font-medium">Total Rent</p>
-                <p className="text-2xl font-bold text-purple-700">NPR {totalRent.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-purple-700">₹ {totalRent.toLocaleString()}</p>
               </div>
             </div>
           </div>

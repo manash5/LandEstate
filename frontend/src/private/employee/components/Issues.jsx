@@ -291,7 +291,7 @@ const Issues = () => {
                   {record.cost > 0 && (
                     <div className="flex items-center text-sm text-gray-600">
                       <DollarSign className="w-4 h-4 mr-2" />
-                      <span>Cost: NPR {parseFloat(record.cost).toLocaleString()}</span>
+                      <span>Cost: ₹ {parseFloat(record.cost).toLocaleString()}</span>
                     </div>
                   )}
                 </div>
@@ -411,7 +411,7 @@ const IssueDetailsModal = ({ selectedIssue, onClose, getStatusColor, formatDate 
               {selectedIssue.cost > 0 && (
                 <div className="flex items-center text-sm text-gray-600">
                   <DollarSign className="w-4 h-4 mr-2" />
-                  <span>Cost: NPR {parseFloat(selectedIssue.cost).toLocaleString()}</span>
+                  <span>Cost: ₹ {parseFloat(selectedIssue.cost).toLocaleString()}</span>
                 </div>
               )}
               <div className="flex items-center text-sm">
@@ -552,7 +552,7 @@ const AddMaintenanceModal = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost (NPR)
+                Cost (₹)
               </label>
               <input
                 type="number"

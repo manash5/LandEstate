@@ -93,7 +93,7 @@ const Dashboard = ({ setSelectedRoom }) => {
     },
     {
       title: "Monthly Revenue",
-      value: `$${stats.monthlyRevenue.toLocaleString()}`,
+      value: `₹${stats.monthlyRevenue.toLocaleString()}`,
       icon: CheckCircle,
       color: "purple",
       change: "From assigned properties"

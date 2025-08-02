@@ -464,7 +464,7 @@ const test = () => {
                 name: "Michael Chen",
                 role: "Investment Fund Manager",
                 location: "Manhattan, NY",
-                content: "Landestate's market analytics helped me build a $50M portfolio. The ROI predictions were spot-on, exceeding all expectations.",
+                content: "Landestate's market analytics helped me build a ₹50M portfolio. The ROI predictions were spot-on, exceeding all expectations.",
                 rating: 5,
                 image: "MC"
               },

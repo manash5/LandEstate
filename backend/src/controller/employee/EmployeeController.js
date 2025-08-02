@@ -371,9 +371,17 @@ const getEmployeeDashboard = async (req, res) => {
         // Count open issues (maintenance records with status not completed)
         const openIssues = maintenanceRecords.filter(record => record.status !== 'completed').length;
         
-        // Calculate monthly revenue from assigned properties
+        // Calculate monthly revenue from room rents
         const monthlyRevenue = assignedProperties.reduce((sum, prop) => {
-            if (prop.priceDuration === 'per month') {
+            if (prop.rooms && prop.rooms.length > 0) {
+                // Sum up rent from all rooms in this property
+                const propertyRent = prop.rooms.reduce((roomSum, room) => {
+                    return roomSum + parseFloat(room.rent || 0);
+                }, 0);
+                return sum + propertyRent;
+            }
+            // Fallback to property price if no rooms defined
+            else if (prop.priceDuration === 'per month') {
                 return sum + parseFloat(prop.price || 0);
             }
             return sum;

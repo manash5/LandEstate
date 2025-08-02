@@ -217,7 +217,7 @@ const RoomsModal = ({ property, onClose, setSelectedRoom }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Monthly Rent (NPR)
+                        Monthly Rent (₹)
                       </label>
                       <input
                         type="number"
@@ -300,7 +300,7 @@ const RoomsModal = ({ property, onClose, setSelectedRoom }) => {
                       {room.rent > 0 && (
                         <div className="flex items-center text-gray-600">
                           <DollarSign className="w-4 h-4 mr-2" />
-                          <span className="text-sm">NPR {Number(room.rent).toLocaleString()}</span>
+                          <span className="text-sm">₹ {Number(room.rent).toLocaleString()}</span>
                         </div>
                       )}
 
