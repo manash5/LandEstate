@@ -9,6 +9,7 @@ import {
     getAssignedProperties,
     getMaintenanceRecords,
     createMaintenanceRecord,
+    updateMaintenanceRecord,
     seedDatabaseData,
     createInitialConversationsEndpoint,
     getDatabaseDiagnosticsEndpoint,
@@ -43,5 +44,6 @@ router.get('/dashboard', getEmployeeDashboard);
 router.get('/dashboard/properties', getAssignedProperties);
 router.get('/dashboard/maintenance', getMaintenanceRecords);
 router.post('/dashboard/maintenance', createMaintenanceRecord);
+router.put('/dashboard/maintenance/:id', updateMaintenanceRecord);
 
 export default router;

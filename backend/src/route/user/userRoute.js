@@ -22,6 +22,12 @@ router.patch("/:id/account-info", authenticateToken, authorizeUser, UserControll
 router.patch("/:id/change-password", authenticateToken, authorizeUser, UserController.changePassword);
 router.post("/:id/validate-password", authenticateToken, authorizeUser, UserController.validateCurrentPassword);
 
+// Dashboard routes (require authentication only)
+router.get("/:id/dashboard", authenticateToken, UserController.getDashboard);
+router.get("/:id/dashboard/revenue", authenticateToken, UserController.getRevenueDetails);
+router.get("/:id/dashboard/maintenance", authenticateToken, UserController.getMaintenanceDetails);
+router.get("/:id/dashboard/occupancy", authenticateToken, UserController.getOccupancyDetails);
+
 export { router as userRouter };
 
 

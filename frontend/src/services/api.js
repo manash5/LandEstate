@@ -261,6 +261,16 @@ export const createMaintenanceRecord = (maintenanceData) => {
   });
 };
 
+// Update maintenance record for employee's property
+export const updateMaintenanceRecord = (maintenanceId, updateData) => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.put(`${EMPLOYEE_DASHBOARD_API}/maintenance/${maintenanceId}`, updateData, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 // Get property details with rooms and maintenance records
 export const getPropertyDetails = (propertyId) => {
   const token = localStorage.getItem('token');
@@ -393,6 +403,56 @@ export const startEmployeeConversation = (userId, userType = 'user') => {
 export const getEmployeeUnreadCount = () => {
   const token = localStorage.getItem('employeeToken');
   return axios.get(`${EMPLOYEE_MESSAGE_API}/unread-count`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Dashboard API functions
+export const getUserDashboard = (userId, month = null, year = null) => {
+  const token = localStorage.getItem('token');
+  const params = new URLSearchParams();
+  if (month) params.append('month', month);
+  if (year) params.append('year', year);
+  
+  return axios.get(`${API}/${userId}/dashboard?${params}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+export const getRevenueDetails = (userId, month = null, year = null) => {
+  const token = localStorage.getItem('token');
+  const params = new URLSearchParams();
+  if (month) params.append('month', month);
+  if (year) params.append('year', year);
+  
+  return axios.get(`${API}/${userId}/dashboard/revenue?${params}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+export const getMaintenanceDetails = (userId, month = null, year = null, status = null) => {
+  const token = localStorage.getItem('token');
+  const params = new URLSearchParams();
+  if (month) params.append('month', month);
+  if (year) params.append('year', year);
+  if (status) params.append('status', status);
+  
+  return axios.get(`${API}/${userId}/dashboard/maintenance?${params}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+export const getOccupancyDetails = (userId) => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${API}/${userId}/dashboard/occupancy`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }

@@ -617,6 +617,75 @@ const createMaintenanceRecord = async (req, res) => {
 };
 
 /**
+ * Update maintenance record for employee's property
+ */
+const updateMaintenanceRecord = async (req, res) => {
+    try {
+        const employeeId = req.employee.id;
+        const maintenanceId = req.params.id;
+        const { status, cost, technician, description } = req.body;
+
+        // Find the maintenance record
+        const maintenanceRecord = await MaintenanceRecord.findByPk(maintenanceId, {
+            include: [
+                {
+                    model: Property,
+                    as: 'property',
+                    where: { employeeId: employeeId }
+                }
+            ]
+        });
+
+        if (!maintenanceRecord) {
+            return res.status(404).json({
+                success: false,
+                message: "Maintenance record not found or not authorized to update"
+            });
+        }
+
+        // Prepare update data
+        const updateData = {};
+        if (status !== undefined) updateData.status = status;
+        if (cost !== undefined) updateData.cost = parseFloat(cost) || 0;
+        if (technician !== undefined) updateData.technician = technician ? sanitizeInput(technician) : null;
+        if (description !== undefined) updateData.description = description ? sanitizeInput(description) : null;
+
+        // Update the maintenance record
+        await maintenanceRecord.update(updateData);
+
+        // Fetch the updated record with all relations
+        const updatedRecord = await MaintenanceRecord.findByPk(maintenanceId, {
+            include: [
+                {
+                    model: Property,
+                    as: 'property',
+                    attributes: ['name', 'location']
+                },
+                {
+                    model: Room,
+                    as: 'room',
+                    attributes: ['number', 'id'],
+                    required: false
+                }
+            ]
+        });
+
+        res.status(200).json({
+            success: true,
+            data: updatedRecord,
+            message: "Maintenance record updated successfully"
+        });
+
+    } catch (error) {
+        console.error('Error updating maintenance record:', error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to update maintenance record"
+        });
+    }
+};
+
+/**
  * Seed database with initial data (Admin only)
  */
 const seedDatabaseData = async (req, res) => {
@@ -739,6 +808,7 @@ export {
     getAssignedProperties,
     getMaintenanceRecords,
     createMaintenanceRecord,
+    updateMaintenanceRecord,
     seedDatabaseData,
     createInitialConversationsEndpoint,
     getDatabaseDiagnosticsEndpoint,

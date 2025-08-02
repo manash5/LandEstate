@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, AlertTriangle, Clock, CheckCircle, User, MapPin, X, Plus, Home, Settings, Calendar, DollarSign } from 'lucide-react';
-import { getEmployeeMaintenanceRecords, createMaintenanceRecord, getEmployeeAssignedProperties } from '../../../services/api';
+import { Search, AlertTriangle, Clock, CheckCircle, User, MapPin, X, Plus, Home, Settings, Calendar, DollarSign, Edit2, Save } from 'lucide-react';
+import { getEmployeeMaintenanceRecords, createMaintenanceRecord, getEmployeeAssignedProperties, updateMaintenanceRecord } from '../../../services/api';
 
 const Issues = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,6 +82,30 @@ const Issues = () => {
     } catch (err) {
       console.error('Error creating maintenance record:', err);
       setError('Failed to create maintenance record');
+    }
+  };
+
+  const handleStatusUpdate = async (maintenanceId, newStatus) => {
+    try {
+      const response = await updateMaintenanceRecord(maintenanceId, { status: newStatus });
+      if (response.data.success) {
+        // Update the local state
+        setMaintenanceRecords(prev => 
+          prev.map(record => 
+            record.id === maintenanceId 
+              ? { ...record, status: newStatus }
+              : record
+          )
+        );
+        
+        // Update the selected issue if it's currently open
+        if (selectedIssue && selectedIssue.id === maintenanceId) {
+          setSelectedIssue(prev => ({ ...prev, status: newStatus }));
+        }
+      }
+    } catch (err) {
+      console.error('Error updating maintenance record status:', err);
+      setError('Failed to update maintenance record status');
     }
   };
 
@@ -343,6 +367,7 @@ const Issues = () => {
           onClose={() => setShowDetailsModal(false)}
           getStatusColor={getStatusColor}
           formatDate={formatDate}
+          onStatusUpdate={handleStatusUpdate}
         />
       )}
       {showAddModal && (
@@ -361,71 +386,151 @@ const Issues = () => {
 };
 
 // Move modal components outside to prevent re-creation
-const IssueDetailsModal = ({ selectedIssue, onClose, getStatusColor, formatDate }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
-      <div className="flex items-center justify-between p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-800">Maintenance Record Details</h2>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+const IssueDetailsModal = ({ selectedIssue, onClose, getStatusColor, formatDate, onStatusUpdate }) => {
+  const [isEditingStatus, setIsEditingStatus] = React.useState(false);
+  const [currentStatus, setCurrentStatus] = React.useState(selectedIssue.status);
+  const [isUpdating, setIsUpdating] = React.useState(false);
 
-      <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">{selectedIssue.serviceName}</h3>
-            <p className="text-gray-600">{selectedIssue.description || 'No description provided'}</p>
-          </div>
+  const statusOptions = [
+    { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'in-progress', label: 'In Progress', color: 'bg-blue-100 text-blue-800' },
+    { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800' },
+    { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+  ];
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center text-sm text-gray-600">
-                <Home className="w-4 h-4 mr-2" />
-                <span>Property: {selectedIssue.property?.name || 'Unknown'}</span>
-              </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <MapPin className="w-4 h-4 mr-2" />
-                <span>Location: {selectedIssue.location}</span>
-              </div>
-              {selectedIssue.room && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <span>Room: {selectedIssue.room.number}</span>
-                </div>
-              )}
-              {selectedIssue.technician && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <User className="w-4 h-4 mr-2" />
-                  <span>Technician: {selectedIssue.technician}</span>
-                </div>
-              )}
+  const handleStatusSave = async () => {
+    if (currentStatus === selectedIssue.status) {
+      setIsEditingStatus(false);
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await onStatusUpdate(selectedIssue.id, currentStatus);
+      setIsEditingStatus(false);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      setCurrentStatus(selectedIssue.status); // Reset to original status
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleStatusCancel = () => {
+    setCurrentStatus(selectedIssue.status);
+    setIsEditingStatus(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">Maintenance Record Details</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">{selectedIssue.serviceName}</h3>
+              <p className="text-gray-600">{selectedIssue.description || 'No description provided'}</p>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center text-sm text-gray-600">
-                <Calendar className="w-4 h-4 mr-2" />
-                <span>Service Date: {formatDate(selectedIssue.serviceDate)}</span>
-              </div>
-              {selectedIssue.cost > 0 && (
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <div className="flex items-center text-sm text-gray-600">
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  <span>Cost: ₹ {parseFloat(selectedIssue.cost).toLocaleString()}</span>
+                  <Home className="w-4 h-4 mr-2" />
+                  <span>Property: {selectedIssue.property?.name || 'Unknown'}</span>
                 </div>
-              )}
-              <div className="flex items-center text-sm">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedIssue.status)}`}>
-                  Status: {selectedIssue.status.toUpperCase()}
-                </span>
+                <div className="flex items-center text-sm text-gray-600">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <span>Location: {selectedIssue.location}</span>
+                </div>
+                {selectedIssue.room && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <span>Room: {selectedIssue.room.number}</span>
+                  </div>
+                )}
+                {selectedIssue.technician && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <User className="w-4 h-4 mr-2" />
+                    <span>Technician: {selectedIssue.technician}</span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center text-sm text-gray-600">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <span>Service Date: {formatDate(selectedIssue.serviceDate)}</span>
+                </div>
+                {selectedIssue.cost > 0 && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    <span>Cost: ₹ {parseFloat(selectedIssue.cost).toLocaleString()}</span>
+                  </div>
+                )}
+                
+                {/* Editable Status Section */}
+                <div className="flex items-center text-sm">
+                  {isEditingStatus ? (
+                    <div className="flex items-center space-x-2">
+                      <select
+                        value={currentStatus}
+                        onChange={(e) => setCurrentStatus(e.target.value)}
+                        className="px-3 py-1 border border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={isUpdating}
+                      >
+                        {statusOptions.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={handleStatusSave}
+                        disabled={isUpdating}
+                        className="p-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors disabled:opacity-50"
+                        title="Save Status"
+                      >
+                        <Save className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={handleStatusCancel}
+                        disabled={isUpdating}
+                        className="p-1 bg-gray-500 hover:bg-gray-600 text-white rounded transition-colors disabled:opacity-50"
+                        title="Cancel"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(currentStatus)}`}>
+                        Status: {currentStatus.replace('-', ' ').toUpperCase()}
+                      </span>
+                      <button
+                        onClick={() => setIsEditingStatus(true)}
+                        className="p-1 text-blue-500 hover:text-blue-700 transition-colors"
+                        title="Edit Status"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const AddMaintenanceModal = ({ 
   formData, 

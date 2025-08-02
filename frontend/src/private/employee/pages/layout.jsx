@@ -30,8 +30,6 @@ const Layout = () => {
         return <Messages />;
       case 'Tenants Overview':
         return <TenantsOverview />;
-      case 'Settings':
-        return <Settings />;
       default:
         return <Dashboard />;
     }

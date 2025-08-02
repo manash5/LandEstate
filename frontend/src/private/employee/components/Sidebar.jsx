@@ -4,15 +4,17 @@ import {
   Building, 
   Clipboard, 
   Users, 
-  Settings, 
   ChevronLeft,
   PartyPopper, 
   MessageSquare
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import houseIcon from '../../../assets/house.png';
 
 const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [employeeData, setEmployeeData] = useState(null);
+  const navigate = useNavigate();
 
   // Get employee data from localStorage and API
   useEffect(() => {
@@ -39,13 +41,18 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
     { icon: Clipboard, label: 'Issues Raised' },
     { icon: MessageSquare, label: 'Messages' },
     { icon: Users, label: 'Tenants Overview' },
-    { icon: Settings, label: 'Settings' },
   ];
 
   const handleItemClick = (label) => {
     if (onTabChange) {
       onTabChange(label);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('employeeToken');
+    localStorage.removeItem('employeeData');
+    navigate('/employee/login');
   };
 
   const toggleSidebar = () => {
@@ -70,7 +77,7 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
         {/* Header with Logo and Toggle Button */}
         <div className="flex items-center justify-between my-10 px-5">
           <div className="logo flex items-center space-x-2 px-2">
-            {isCollapsed? <img src = './src/assests/house.png'></img>:<><img src = './src/assets/house.png'></img><h1 className="text-xl  text-white font-bold text-primary-500 px-2">LandEstate</h1></>}
+            {isCollapsed? <img src={houseIcon} alt="LandEstate Logo" />:<><img src={houseIcon} alt="LandEstate Logo" /><h1 className="text-xl  text-white font-bold text-primary-500 px-2">LandEstate</h1></>}
           </div>
           
           {!isCollapsed && (
@@ -144,6 +151,17 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
             </button>
           ))}
         </nav>
+        {/* Logout button below navigation */}
+        <div className="px-4 mt-2">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-xl w-full text-left transition-all duration-300 ease-in-out group relative bg-red-500/10 border border-red-500/40 text-red-300 active:bg-red-700/40 active:text-white font-medium`}
+            title="Logout"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" /></svg>
+            <span className={isCollapsed ? 'hidden' : ''}>Logout</span>
+          </button>
+        </div>
       </div>
     </div>
   );

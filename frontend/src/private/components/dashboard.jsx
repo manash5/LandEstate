@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Home, Building, Users, Star, Settings, Bell, Search, TrendingUp, TrendingDown, Eye, Heart, FileSpreadsheet } from 'lucide-react';
 import Sidebar from './sidebar';
-import { getCurrentUser, fetchUserProperties, getEmployees, fetchProperties } from '../../services/api';
+import { getCurrentUser, fetchUserProperties, getEmployees, fetchProperties, getUserDashboard, getRevenueDetails, getMaintenanceDetails, getOccupancyDetails } from '../../services/api';
 
 const dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -20,6 +20,31 @@ const dashboard = () => {
   const [propertyTypeDistribution, setPropertyTypeDistribution] = useState([]);
   const [priceRangeData, setPriceRangeData] = useState([]);
   const [featuredProperties, setFeaturedProperties] = useState([]);
+  
+  // New dashboard data states
+  const [revenueData, setRevenueData] = useState({
+    totalRoomRent: 0,
+    maintenanceCosts: 0,
+    netRevenue: 0,
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear()
+  });
+  const [maintenanceData, setMaintenanceData] = useState({
+    totalCost: 0,
+    recordsCount: 0,
+    byStatus: {
+      pending: 0,
+      'in-progress': 0,
+      completed: 0,
+      cancelled: 0
+    }
+  });
+  const [occupancyData, setOccupancyData] = useState({
+    totalRooms: 0,
+    occupiedRooms: 0,
+    vacantRooms: 0,
+    occupancyRate: 0
+  });
 
   const handleSidebarToggle = (collapsed) => {
     setIsSidebarCollapsed(collapsed);
@@ -152,6 +177,54 @@ const dashboard = () => {
 
         // Set featured properties (user's most recent properties)
         setFeaturedProperties(userProperties.slice(0, 2));
+
+        // Fetch new dashboard data from backend APIs
+        try {
+          console.log('Fetching dashboard data for user:', user.id);
+          const dashboardResponse = await getUserDashboard(user.id);
+          
+          if (dashboardResponse.data && dashboardResponse.data.data) {
+            const dashboardData = dashboardResponse.data.data;
+            console.log('Dashboard data received successfully');
+            
+            // Update revenue data
+            setRevenueData(dashboardData.revenueData || {
+              totalRoomRent: 0,
+              maintenanceCosts: 0,
+              netRevenue: 0,
+              month: new Date().getMonth() + 1,
+              year: new Date().getFullYear()
+            });
+            
+            // Update maintenance data
+            setMaintenanceData(dashboardData.maintenanceData || {
+              totalCost: 0,
+              recordsCount: 0,
+              byStatus: {
+                pending: 0,
+                'in-progress': 0,
+                completed: 0,
+                cancelled: 0
+              }
+            });
+            
+            // Update occupancy data
+            setOccupancyData(dashboardData.occupancyData || {
+              totalRooms: 0,
+              occupiedRooms: 0,
+              vacantRooms: 0,
+              occupancyRate: 0
+            });
+          } else {
+            console.log('No dashboard data in response');
+          }
+        } catch (dashboardError) {
+          console.error('Error fetching dashboard data:', dashboardError);
+          if (dashboardError.response) {
+            console.error('Dashboard error response:', dashboardError.response.status, dashboardError.response.data);
+          }
+          // Continue with existing data if dashboard API fails
+        }
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -348,38 +421,111 @@ const dashboard = () => {
                   <h3 className="text-xl font-bold text-gray-800">Revenue</h3>
                   <div className="flex items-center space-x-2 text-green-500">
                     <TrendingUp className="w-4 h-4" />
-                    <span className="text-sm font-medium">+12.5%</span>
+                    <span className="text-sm font-medium">
+                      {revenueData.netRevenue >= 0 ? `+${((revenueData.netRevenue / Math.max(revenueData.totalRoomRent, 1)) * 100).toFixed(1)}%` : 'Loss'}
+                    </span>
                   </div>
                 </div>
                 <div className="mb-4">
-                  <p className="text-3xl font-bold text-gray-800">₹236,535</p>
-                  <p className="text-gray-500 text-sm">Total Revenue</p>
+                  <p className="text-3xl font-bold text-gray-800">
+                    ₹{loading ? '...' : revenueData.netRevenue.toLocaleString()}
+                  </p>
+                  <p className="text-gray-500 text-sm">Net Revenue (Room Rent - Maintenance)</p>
+                  <div className="mt-2 text-xs text-gray-400">
+                    <div>Room Rent: ₹{revenueData.totalRoomRent.toLocaleString()}</div>
+                    <div>Maintenance: ₹{revenueData.maintenanceCosts.toLocaleString()}</div>
+                  </div>
                 </div>
                 <div className="h-48 bg-gradient-to-t from-blue-50 to-transparent rounded-xl flex items-end justify-center p-4">
                   <div className="flex items-end space-x-2 w-full">
-                    {[40, 60, 35, 80, 45, 90, 70, 85, 65].map((height, index) => (
-                      <div
-                        key={index}
-                        className="bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg flex-1"
-                        style={{ height: `${height}%` }}
-                      ></div>
-                    ))}
+                    {loading ? (
+                      <div className="flex-1 bg-gray-200 rounded-t-lg h-16 animate-pulse"></div>
+                    ) : (
+                      // Show revenue visualization bars
+                      [
+                        Math.max(revenueData.totalRoomRent * 0.4, 10),
+                        Math.max(revenueData.totalRoomRent * 0.6, 15),
+                        Math.max(revenueData.totalRoomRent * 0.35, 8),
+                        Math.max(revenueData.netRevenue * 0.8, 20),
+                        Math.max(revenueData.totalRoomRent * 0.45, 12),
+                        Math.max(revenueData.netRevenue * 0.9, 25),
+                        Math.max(revenueData.totalRoomRent * 0.7, 18),
+                        Math.max(revenueData.netRevenue * 0.85, 22),
+                        Math.max(revenueData.totalRoomRent * 0.65, 16)
+                      ].map((height, index) => (
+                        <div
+                          key={index}
+                          className="bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg flex-1"
+                          style={{ height: `${Math.min(height / 100, 80)}%` }}
+                        ></div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Maintenance & Room Availability */}
+              {/* Maintenance & Room Occupancy */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                   <h3 className="text-lg font-bold text-gray-800 mb-4">Maintenance</h3>
-                  <div className="h-24 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl flex items-center justify-center">
-                    <p className="text-gray-400 text-sm">3 pending requests</p>
+                  <div className="mb-4">
+                    <p className="text-2xl font-bold text-gray-800">
+                      ₹{loading ? '...' : maintenanceData.totalCost.toLocaleString()}
+                    </p>
+                    <p className="text-gray-500 text-sm">Total Cost This Month</p>
+                  </div>
+                  <div className="h-24 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4">
+                    <div className="flex justify-between items-center h-full">
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-orange-600">
+                          {loading ? '...' : maintenanceData.byStatus.pending}
+                        </p>
+                        <p className="text-xs text-gray-500">Pending</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-blue-600">
+                          {loading ? '...' : maintenanceData.byStatus['in-progress']}
+                        </p>
+                        <p className="text-xs text-gray-500">In Progress</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold text-green-600">
+                          {loading ? '...' : maintenanceData.byStatus.completed}
+                        </p>
+                        <p className="text-xs text-gray-500">Completed</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4">Room Availability</h3>
-                  <div className="h-24 bg-gradient-to-br from-green-50 to-teal-50 rounded-xl flex items-center justify-center">
-                    <p className="text-gray-400 text-sm">85% occupied</p>
+                  <h3 className="text-lg font-bold text-gray-800 mb-4">Room Occupancy Rate</h3>
+                  <div className="mb-4">
+                    <p className="text-2xl font-bold text-gray-800">
+                      {loading ? '...' : `${occupancyData.occupancyRate}%`}
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      {occupancyData.occupiedRooms} of {occupancyData.totalRooms} rooms occupied
+                    </p>
+                  </div>
+                  <div className="h-24 bg-gradient-to-br from-green-50 to-teal-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between h-full">
+                      <div className="flex-1">
+                        <div className="flex justify-between text-xs text-gray-600 mb-2">
+                          <span>Occupied</span>
+                          <span>Vacant</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-4">
+                          <div 
+                            className="bg-gradient-to-r from-green-500 to-teal-500 h-4 rounded-full transition-all duration-500"
+                            style={{ width: `${occupancyData.occupancyRate}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>{occupancyData.occupiedRooms} rooms</span>
+                          <span>{occupancyData.vacantRooms} rooms</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
