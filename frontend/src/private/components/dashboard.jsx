@@ -306,10 +306,6 @@ const dashboard = () => {
               <p className="text-gray-500 mt-1 text-sm">Here's what's happening with your properties</p>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                 <span className="text-white font-semibold text-sm">
                   {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'U'}
