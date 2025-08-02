@@ -7,7 +7,14 @@ import {
     getEmployeeById,
     getEmployeeDashboard,
     getAssignedProperties,
-    getMaintenanceRecords
+    getMaintenanceRecords,
+    createMaintenanceRecord,
+    seedDatabaseData,
+    createInitialConversationsEndpoint,
+    getDatabaseDiagnosticsEndpoint,
+    runDatabaseMigrations,
+    resetDatabaseEndpoint,
+    checkDatabaseHealthEndpoint
 } from '../../controller/employee/EmployeeController.js';
 import { authenticateToken } from '../../middleware/token-middleware.js';
 import { authenticateEmployee } from '../../middleware/employee-auth-middleware.js';
@@ -22,10 +29,19 @@ router.get('/manage/:id', getEmployeeById);
 router.put('/manage/:id', updateEmployee);
 router.delete('/manage/:id', deleteEmployee);
 
+// Database utility routes (admin only)
+router.post('/manage/seed-database', seedDatabaseData);
+router.post('/manage/create-conversations', createInitialConversationsEndpoint);
+router.get('/manage/diagnostics', getDatabaseDiagnosticsEndpoint);
+router.post('/manage/run-migrations', runDatabaseMigrations);
+router.post('/manage/reset-database', resetDatabaseEndpoint);
+router.get('/manage/health-check', checkDatabaseHealthEndpoint);
+
 // Employee dashboard routes (require employee auth)
 router.use('/dashboard', authenticateEmployee);
 router.get('/dashboard', getEmployeeDashboard);
 router.get('/dashboard/properties', getAssignedProperties);
 router.get('/dashboard/maintenance', getMaintenanceRecords);
+router.post('/dashboard/maintenance', createMaintenanceRecord);
 
 export default router;

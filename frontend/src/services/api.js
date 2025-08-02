@@ -90,12 +90,13 @@ export const getMessages = (conversationId, page = 1, limit = 50) => {
 };
 
 // Send a new message
-export const sendMessage = (receiverId, content, messageType = 'text') => {
+export const sendMessage = (receiverId, content, messageType = 'text', userType = 'user') => {
   const token = localStorage.getItem('token');
   return axios.post(`${MESSAGE_API}/send`, {
     receiverId,
     content,
-    messageType
+    messageType,
+    userType
   }, {
     headers: {
       'Authorization': `Bearer ${token}`
@@ -114,10 +115,11 @@ export const searchUsers = (query) => {
 };
 
 // Start a new conversation
-export const startConversation = (userId) => {
+export const startConversation = (userId, userType = 'user') => {
   const token = localStorage.getItem('token');
   return axios.post(`${MESSAGE_API}/start-conversation`, {
-    userId
+    userId,
+    userType
   }, {
     headers: {
       'Authorization': `Bearer ${token}`
@@ -125,8 +127,28 @@ export const startConversation = (userId) => {
   });
 };
 
+// Get total unread message count
+export const getUnreadMessageCount = () => {
+  const token = localStorage.getItem('token');
+  return axios.get(`${MESSAGE_API}/unread-count`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Initialize conversations with all employees (admin only)
+export const initializeEmployeeConversations = () => {
+  const token = localStorage.getItem('token');
+  return axios.post(`${MESSAGE_API}/initialize-employee-conversations`, {}, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 // Employee API functions
-const EMPLOYEE_API = 'http://localhost:4000/api/employees';
+const EMPLOYEE_API = 'http://localhost:4000/api/employees/manage';
 
 // Create a new employee
 export const createEmployee = (employeeData) => {
@@ -229,6 +251,16 @@ export const getEmployeeMaintenanceRecords = () => {
   });
 };
 
+// Create maintenance record for employee's property
+export const createMaintenanceRecord = (maintenanceData) => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.post(`${EMPLOYEE_DASHBOARD_API}/maintenance`, maintenanceData, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 // Get property details with rooms and maintenance records
 export const getPropertyDetails = (propertyId) => {
   const token = localStorage.getItem('token');
@@ -290,6 +322,77 @@ export const updateRoom = (roomId, roomData) => {
 export const deleteRoom = (roomId) => {
   const token = localStorage.getItem('employeeToken') || localStorage.getItem('token');
   return axios.delete(`http://localhost:4000/api/rooms/rooms/${roomId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Employee Message API functions
+const EMPLOYEE_MESSAGE_API = 'http://localhost:4000/api/employee-messages';
+
+// Get all conversations for the current employee
+export const getEmployeeConversations = () => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.get(`${EMPLOYEE_MESSAGE_API}/conversations`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Get messages for a specific conversation (employee)
+export const getEmployeeMessages = (conversationId, page = 1, limit = 50) => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.get(`${EMPLOYEE_MESSAGE_API}/conversations/${conversationId}/messages?page=${page}&limit=${limit}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Send a new message (employee to manager)
+export const sendEmployeeMessage = (receiverId, content, messageType = 'text', userType = 'user') => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.post(`${EMPLOYEE_MESSAGE_API}/send`, {
+    receiverId,
+    content,
+    messageType,
+    userType
+  }, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Search managers for starting new conversations (employee)
+export const searchEmployeeUsers = (query) => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.get(`${EMPLOYEE_MESSAGE_API}/search-users?query=${encodeURIComponent(query)}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Start a new conversation (employee with manager)
+export const startEmployeeConversation = (userId, userType = 'user') => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.post(`${EMPLOYEE_MESSAGE_API}/start-conversation`, {
+    userId,
+    userType
+  }, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
+// Get total unread message count (employee)
+export const getEmployeeUnreadCount = () => {
+  const token = localStorage.getItem('employeeToken');
+  return axios.get(`${EMPLOYEE_MESSAGE_API}/unread-count`, {
     headers: {
       'Authorization': `Bearer ${token}`
     }

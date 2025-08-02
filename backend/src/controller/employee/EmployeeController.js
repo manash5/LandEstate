@@ -1,4 +1,4 @@
-import { Employee, User, Property, MaintenanceRecord, Room } from '../../models/index.js';
+import { Employee, User, Property, MaintenanceRecord, Room, Conversation, Message } from '../../models/index.js';
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 import { 
@@ -8,6 +8,16 @@ import {
     validateName, 
     sanitizeInput 
 } from '../../utils/validation.js';
+import { 
+    seedDatabase, 
+    createInitialConversations, 
+    getDatabaseDiagnostics 
+} from '../../utils/databaseSeeder.js';
+import { 
+    runMigrations, 
+    resetDatabase, 
+    checkDatabaseHealth 
+} from '../../utils/databaseMigrations.js';
 
 /**
  * Create new employee
@@ -55,7 +65,8 @@ const createEmployee = async (req, res) => {
             name: sanitizeInput(name),
             email: email.toLowerCase(),
             password,
-            phone: phone || null
+            phone: phone || null,
+            managerId: req.user.id  // Set the current user as the manager
         });
 
         // Remove password from response
@@ -81,7 +92,13 @@ const createEmployee = async (req, res) => {
  */
 const getEmployees = async (req, res) => {
     try {
+        // Get the current user's ID from the token middleware
+        const managerId = req.user.id;
+
         const employees = await Employee.findAll({
+            where: {
+                managerId: managerId
+            },
             attributes: { exclude: ['password'] },
             order: [['created_at', 'DESC']]
         });
@@ -108,9 +125,15 @@ const updateEmployee = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, email, phone, isActive } = req.body;
+        const managerId = req.user.id;
 
-        // Find employee
-        const employee = await Employee.findByPk(id);
+        // Find employee belonging to current manager
+        const employee = await Employee.findOne({
+            where: {
+                id: id,
+                managerId: managerId
+            }
+        });
 
         if (!employee) {
             return res.status(404).json({ 
@@ -179,9 +202,15 @@ const updateEmployee = async (req, res) => {
 const deleteEmployee = async (req, res) => {
     try {
         const { id } = req.params;
+        const managerId = req.user.id;
 
-        // Find employee
-        const employee = await Employee.findByPk(id);
+        // Find employee belonging to current manager
+        const employee = await Employee.findOne({
+            where: {
+                id: id,
+                managerId: managerId
+            }
+        });
 
         if (!employee) {
             return res.status(404).json({ 
@@ -190,7 +219,38 @@ const deleteEmployee = async (req, res) => {
             });
         }
 
+        // Clean up employee-related data
+        const virtualUserId = -parseInt(id);
+        
+        // Delete messages involving this employee
+        await Message.destroy({
+            where: {
+                [Op.or]: [
+                    { senderId: virtualUserId },
+                    { receiverId: virtualUserId }
+                ]
+            }
+        });
+
+        // Delete conversations involving this employee
+        await Conversation.destroy({
+            where: {
+                [Op.or]: [
+                    { user1Id: virtualUserId },
+                    { user2Id: virtualUserId }
+                ]
+            }
+        });
+
+        // Delete the virtual user entry
+        await User.destroy({
+            where: { id: virtualUserId }
+        });
+
+        // Finally delete the employee
         await employee.destroy();
+
+        console.log(`✓ Cleaned up employee ${id} and related messaging data`);
 
         res.status(200).json({
             success: true,
@@ -212,8 +272,13 @@ const deleteEmployee = async (req, res) => {
 const getEmployeeById = async (req, res) => {
     try {
         const { id } = req.params;
+        const managerId = req.user.id;
 
-        const employee = await Employee.findByPk(id, {
+        const employee = await Employee.findOne({
+            where: {
+                id: id,
+                managerId: managerId
+            },
             attributes: { exclude: ['password'] }
         });
 
@@ -412,10 +477,19 @@ const getMaintenanceRecords = async (req, res) => {
             where: { 
                 propertyId: { [Op.in]: propertyIds }
             },
-            include: [{
-                model: Property,
-                attributes: ['name']
-            }],
+            include: [
+                {
+                    model: Property,
+                    as: 'property',
+                    attributes: ['name', 'location']
+                },
+                {
+                    model: Room,
+                    as: 'room',
+                    attributes: ['number', 'id'],
+                    required: false
+                }
+            ],
             order: [['serviceDate', 'DESC']]
         }) : [];
 
@@ -434,6 +508,219 @@ const getMaintenanceRecords = async (req, res) => {
     }
 };
 
+const createMaintenanceRecord = async (req, res) => {
+    try {
+        const employeeId = req.employee.id;
+        const { 
+            serviceName,
+            location,
+            description,
+            status = 'pending',
+            cost = 0,
+            technician,
+            serviceDate,
+            propertyId,
+            roomId
+        } = req.body;
+
+        // Validate required fields
+        if (!serviceName || !location || !propertyId) {
+            return res.status(400).json({
+                success: false,
+                message: "Service name, location, and property ID are required"
+            });
+        }
+
+        // Check if the property is assigned to this employee
+        const assignedProperty = await Property.findOne({
+            where: { 
+                id: propertyId,
+                employeeId: employeeId 
+            }
+        });
+
+        if (!assignedProperty) {
+            return res.status(403).json({
+                success: false,
+                message: "You can only create maintenance records for your assigned properties"
+            });
+        }
+
+        // If roomId is provided, validate it belongs to the property
+        if (roomId) {
+            const room = await Room.findOne({
+                where: {
+                    id: roomId,
+                    propertyId: propertyId
+                }
+            });
+
+            if (!room) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid room ID for the specified property"
+                });
+            }
+        }
+
+        // Create the maintenance record
+        const maintenanceRecord = await MaintenanceRecord.create({
+            serviceName: sanitizeInput(serviceName),
+            location: sanitizeInput(location),
+            description: description ? sanitizeInput(description) : null,
+            status,
+            cost: parseFloat(cost) || 0,
+            technician: technician ? sanitizeInput(technician) : null,
+            serviceDate: serviceDate ? new Date(serviceDate) : new Date(),
+            propertyId,
+            roomId: roomId || null
+        });
+
+        // Fetch the created record with property details
+        const createdRecord = await MaintenanceRecord.findByPk(maintenanceRecord.id, {
+            include: [
+                {
+                    model: Property,
+                    as: 'property',
+                    attributes: ['name', 'location']
+                },
+                {
+                    model: Room,
+                    as: 'room',
+                    attributes: ['number', 'id'],
+                    required: false
+                }
+            ]
+        });
+
+        res.status(201).json({
+            success: true,
+            data: createdRecord,
+            message: "Maintenance record created successfully"
+        });
+
+    } catch (error) {
+        console.error('Error creating maintenance record:', error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to create maintenance record"
+        });
+    }
+};
+
+/**
+ * Seed database with initial data (Admin only)
+ */
+const seedDatabaseData = async (req, res) => {
+    try {
+        const result = await seedDatabase();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error seeding database:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to seed database', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Create initial conversations between employees and managers (Admin only)
+ */
+const createInitialConversationsEndpoint = async (req, res) => {
+    try {
+        const result = await createInitialConversations();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error creating initial conversations:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to create initial conversations', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Get database diagnostics (Admin only)
+ */
+const getDatabaseDiagnosticsEndpoint = async (req, res) => {
+    try {
+        const diagnostics = await getDatabaseDiagnostics();
+        res.status(200).json({ 
+            success: true, 
+            message: 'Database diagnostics retrieved successfully',
+            data: diagnostics 
+        });
+    } catch (error) {
+        console.error('Error getting database diagnostics:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to get database diagnostics', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Run database migrations (Admin only)
+ */
+const runDatabaseMigrations = async (req, res) => {
+    try {
+        const result = await runMigrations();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error running migrations:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to run migrations', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Reset database (Admin only - DANGEROUS)
+ */
+const resetDatabaseEndpoint = async (req, res) => {
+    try {
+        if (req.body.confirmReset !== 'YES_DELETE_ALL_DATA') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Database reset requires confirmation. Send { "confirmReset": "YES_DELETE_ALL_DATA" }' 
+            });
+        }
+        
+        const result = await resetDatabase();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error resetting database:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to reset database', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Check database health
+ */
+const checkDatabaseHealthEndpoint = async (req, res) => {
+    try {
+        const health = await checkDatabaseHealth();
+        res.status(health.success ? 200 : 500).json(health);
+    } catch (error) {
+        console.error('Error checking database health:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to check database health', 
+            error: error.message 
+        });
+    }
+};
+
 export {
     createEmployee,
     getEmployees,
@@ -442,5 +729,12 @@ export {
     getEmployeeById,
     getEmployeeDashboard,
     getAssignedProperties,
-    getMaintenanceRecords
+    getMaintenanceRecords,
+    createMaintenanceRecord,
+    seedDatabaseData,
+    createInitialConversationsEndpoint,
+    getDatabaseDiagnosticsEndpoint,
+    runDatabaseMigrations,
+    resetDatabaseEndpoint,
+    checkDatabaseHealthEndpoint
 };

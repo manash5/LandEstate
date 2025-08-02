@@ -17,16 +17,23 @@ const createRoom = async (req, res) => {
             return res.status(404).json({ message: "Property not found" });
         }
 
-        // Create the room
-        const room = await Room.create({
+        // Prepare room data - handle vacant status properly
+        const roomData = {
             number,
-            tenant,
-            tenantContact,
             rent: rent || 0,
-            rentDueDate,
-            status,
+            status: status || 'vacant',
             propertyId
-        });
+        };
+
+        // For vacant rooms, don't set tenant information
+        if (status !== 'vacant') {
+            roomData.tenant = tenant;
+            roomData.tenantContact = tenantContact;
+            roomData.rentDueDate = rentDueDate;
+        }
+
+        // Create the room
+        const room = await Room.create(roomData);
 
         res.status(201).json({
             data: room,
@@ -73,15 +80,27 @@ const updateRoom = async (req, res) => {
             return res.status(404).json({ message: "Room not found" });
         }
 
-        await room.update({
-            number: number || room.number,
-            tenant: tenant || room.tenant,
-            tenantContact: tenantContact || room.tenantContact,
+        // Handle vacant status properly - clear tenant fields when vacant
+        const updateData = {
+            number: number !== undefined ? number : room.number,
             rent: rent !== undefined ? rent : room.rent,
-            rentDueDate: rentDueDate || room.rentDueDate,
-            status: status || room.status,
+            status: status !== undefined ? status : room.status,
             issue: issue !== undefined ? issue : room.issue
-        });
+        };
+
+        // For vacant rooms, clear tenant information
+        if (status === 'vacant') {
+            updateData.tenant = null;
+            updateData.tenantContact = null;
+            updateData.rentDueDate = null;
+        } else {
+            // For non-vacant rooms, update tenant fields if provided
+            updateData.tenant = tenant !== undefined ? tenant : room.tenant;
+            updateData.tenantContact = tenantContact !== undefined ? tenantContact : room.tenantContact;
+            updateData.rentDueDate = rentDueDate !== undefined ? rentDueDate : room.rentDueDate;
+        }
+
+        await room.update(updateData);
 
         res.status(200).json({
             data: room,

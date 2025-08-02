@@ -18,4 +18,13 @@ router.get("/search-users", MessageController.searchUsers);
 // Start a new conversation
 router.post("/start-conversation", MessageController.startConversation);
 
+// Get total unread message count
+router.get("/unread-count", MessageController.getUnreadCount);
+
+// Initialize conversations with all employees
+router.post("/initialize-employee-conversations", MessageController.initializeEmployeeConversations);
+
+// Clean up orphaned conversations
+router.post("/cleanup-orphaned-conversations", MessageController.cleanupOrphanedConversations);
+
 export { router as messageRouter };

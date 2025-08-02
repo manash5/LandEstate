@@ -36,8 +36,8 @@ const Sidebar = ({ activeTab, onTabChange, onCollapse }) => {
   const sidebarItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
     { icon: Building, label: 'Assigned Properties' },
-    { icon: Clipboard, label: 'Service Records' },
-    { icon: MessageSquare, label: 'Issues Raised' },
+    { icon: Clipboard, label: 'Issues Raised' },
+    { icon: MessageSquare, label: 'Messages' },
     { icon: Users, label: 'Tenants Overview' },
     { icon: Settings, label: 'Settings' },
   ];

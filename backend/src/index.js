@@ -12,6 +12,7 @@ import { messageRouter } from './route/index.js';
 import { roomRouter } from './route/index.js';
 import employeeRouter from './route/employee/employeeRoute.js';
 import employeeAuthRouter from './route/auth/employeeAuthRoute.js';
+import { employeeMessageRouter } from './route/message/employeeMessageRoute.js';
 import { registerRouter } from "./route/register/registerRoute.js";
 import cors from 'cors'; 
 import path from 'path'; 
@@ -23,6 +24,13 @@ app.use(cors());
 const port = process.env.PORT || 5000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true })); // Add this for form submissions
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/photos/upload', express.static(path.join(process.cwd(), 'uploads')));
 
@@ -39,6 +47,7 @@ app.use("/api/rooms", authenticateToken, roomRouter);
 
 // Employee routes (have their own authentication)
 app.use("/api/employees", employeeRouter);
+app.use("/api/employee-messages", employeeMessageRouter);
 app.use("/api/file", router);
 
 createUploadsFolder();

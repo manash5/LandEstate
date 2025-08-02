@@ -26,6 +26,10 @@ Room.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
 Property.hasMany(MaintenanceRecord, { foreignKey: 'propertyId', as: 'maintenanceRecords' });
 MaintenanceRecord.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
 
+// Room-MaintenanceRecord relationships
+Room.hasMany(MaintenanceRecord, { foreignKey: 'roomId', as: 'maintenanceRecords' });
+MaintenanceRecord.belongsTo(Room, { foreignKey: 'roomId', as: 'room' });
+
 // Message relationships
 User.hasMany(Conversation, { foreignKey: 'user1Id', as: 'conversationsAsUser1' });
 User.hasMany(Conversation, { foreignKey: 'user2Id', as: 'conversationsAsUser2' });

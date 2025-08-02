@@ -1,9 +1,35 @@
-import React, { useState } from 'react';
-import { User, Phone, DollarSign, Calendar, MapPin, AlertTriangle, CheckCircle, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Phone, DollarSign, Calendar, MapPin, AlertTriangle, CheckCircle, Search, Loader } from 'lucide-react';
+import { getEmployeeDashboard } from '../../../services/api';
 
-const TenantsOverview = ({ properties }) => {
+export default function TenantsOverview() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchPropertiesData();
+  }, []);
+
+  const fetchPropertiesData = async () => {
+    try {
+      setLoading(true);
+      const response = await getEmployeeDashboard();
+      
+      if (response.data.success) {
+        setProperties(response.data.data.properties || []);
+      } else {
+        setError('Failed to fetch properties data');
+      }
+    } catch (error) {
+      console.error('Error fetching properties data:', error);
+      setError('Failed to load properties data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Extract all tenants from all properties
   const getAllTenants = () => {
@@ -84,8 +110,50 @@ const TenantsOverview = ({ properties }) => {
   const unpaidTenants = tenants.filter(t => t.status === 'unpaid').length;
   const totalRent = tenants.reduce((sum, tenant) => sum + (parseFloat(tenant.rent) || 0), 0);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading tenants data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchPropertiesData}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
+      {/* Page Header */}
+      <div className="bg-slate-100 p-6 rounded-xl relative overflow-hidden">
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-700 bg-clip-text text-transparent mb-1">
+            Tenants Overview
+          </h1>
+          <p className="text-gray-600 text-lg font-medium">
+            Manage and view all tenants from your assigned properties
+          </p>
+          
+          <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mt-2"></div>
+        </div>
+      </div>
+
       {/* Header with stats */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-6">
@@ -262,7 +330,4 @@ const TenantsOverview = ({ properties }) => {
       </div>
     </div>
   );
-};
-
-export { TenantsOverview };
-export default TenantsOverview;
+}

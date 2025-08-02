@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Paperclip, Smile, Send, ChevronDown, Plus, User, ArrowLeft, MessageCircle } from 'lucide-react';
-import { getConversations, getMessages, sendMessage, searchUsers, startConversation, getCurrentUser, getUsersById } from '../../services/api';
+import { getConversations, getMessages, sendMessage, searchUsers, startConversation, getCurrentUser, getUsersById, initializeEmployeeConversations } from '../../services/api';
 import { toast } from 'react-toastify';
 import { useMessage } from '../../context/MessageContext';
 
@@ -37,6 +37,57 @@ const Message = () => {
     };
     fetchCurrentUser();
   }, []);
+
+  // Initialize conversations with all employees when component mounts
+  useEffect(() => {
+    // Temporary flag to disable auto-initialization (set to false to disable)
+    const AUTO_INIT_ENABLED = true;
+    
+    if (!AUTO_INIT_ENABLED) {
+      console.log('🔇 Auto-initialization disabled');
+      return;
+    }
+    
+    const initializeConversations = async () => {
+      // Add a small delay to ensure current user is fully loaded
+      if (currentUser && currentUser.id) {
+        try {
+          console.log('🔄 Initializing conversations with employees for user:', currentUser.id);
+          
+          // Add a small delay to ensure backend is ready
+          setTimeout(async () => {
+            try {
+              const response = await initializeEmployeeConversations();
+              if (response.data?.data) {
+                console.log('✅ Employee conversations initialized:', response.data.data);
+                // Only refresh if we successfully initialized some conversations
+                if (response.data.data.length > 0) {
+                  fetchConversations();
+                }
+              }
+            } catch (error) {
+              console.error('Failed to initialize employee conversations:', error);
+              // Don't show error toast as this is automatic background initialization
+              // But log the full error for debugging
+              if (error.response) {
+                console.error('Error response:', error.response.data);
+                console.error('Error status:', error.response.status);
+              }
+              // If initialization fails, still try to load existing conversations
+              fetchConversations();
+            }
+          }, 1000); // Increased to 1 second delay
+        } catch (error) {
+          console.error('Error in initialization setup:', error);
+        }
+      }
+    };
+    
+    // Only initialize if we don't already have conversations loaded
+    if (conversations.length === 0) {
+      initializeConversations();
+    }
+  }, [currentUser]);
 
   // Fetch conversations on component mount
   useEffect(() => {
@@ -82,9 +133,12 @@ const Message = () => {
       setLoading(true);
       const response = await getConversations();
       if (response.data?.data) {
-        // Remove any duplicate conversations based on otherUser.id
+        // Remove any duplicate conversations based on otherUser.id and userType
         const uniqueConversations = response.data.data.reduce((acc, current) => {
-          const existingIndex = acc.findIndex(conv => conv.otherUser.id === current.otherUser.id);
+          const existingIndex = acc.findIndex(conv => 
+            conv.otherUser.id === current.otherUser.id && 
+            (conv.otherUser.userType || 'user') === (current.otherUser.userType || 'user')
+          );
           if (existingIndex === -1) {
             acc.push(current);
           } else {
@@ -151,7 +205,8 @@ const Message = () => {
     setMessageInput('');
 
     try {
-      const response = await sendMessage(selectedConversation.otherUser.id, content);
+      const userType = selectedConversation.otherUser.userType || 'user';
+      const response = await sendMessage(selectedConversation.otherUser.id, content, 'text', userType);
       if (response.data?.data) {
         // Add the new message to the current messages
         setMessages(prev => [...prev, response.data.data]);
@@ -160,13 +215,16 @@ const Message = () => {
         setConversations(prev => {
           const updated = prev.map(conv => 
             conv.id === selectedConversation.id 
-              ? { ...conv, lastMessage: response.data.data, lastMessageTime: response.data.data.createdAt }
+              ? { ...conv, lastMessage: response.data.data, lastMessageTime: response.data.data.createdAt, unreadCount: 0 }
               : conv
           );
           
           // Remove any duplicates by otherUser.id and sort by lastMessageTime
           const uniqueConversations = updated.reduce((acc, current) => {
-            const existingIndex = acc.findIndex(conv => conv.otherUser.id === current.otherUser.id);
+            const existingIndex = acc.findIndex(conv => 
+              conv.otherUser.id === current.otherUser.id && 
+              conv.otherUser.userType === current.otherUser.userType
+            );
             if (existingIndex === -1) {
               acc.push(current);
             } else {
@@ -185,7 +243,8 @@ const Message = () => {
         setSelectedConversation(prev => ({
           ...prev,
           lastMessage: response.data.data,
-          lastMessageTime: response.data.data.createdAt
+          lastMessageTime: response.data.data.createdAt,
+          unreadCount: 0
         }));
         
         // Refresh conversations to get updated order
@@ -233,7 +292,7 @@ const Message = () => {
       
       // First check if conversation already exists
       const existingConversation = conversations.find(conv => 
-        conv.otherUser.id === user.id
+        conv.otherUser.id === user.id && conv.otherUser.userType === (user.userType || 'user')
       );
       
       if (existingConversation) {
@@ -245,13 +304,14 @@ const Message = () => {
       }
 
       console.log('Creating new conversation with user'); // Debug log
-      const response = await startConversation(user.id);
+      const response = await startConversation(user.id, user.userType || 'user');
       if (response.data?.data) {
         console.log('Created conversation:', response.data.data); // Debug log
         
-        // Check if this conversation already exists in our list (by other user ID)
+        // Check if this conversation already exists in our list (by other user ID and type)
         const duplicateCheck = conversations.find(conv => 
-          conv.otherUser.id === response.data.data.otherUser.id
+          conv.otherUser.id === response.data.data.otherUser.id &&
+          conv.otherUser.userType === response.data.data.otherUser.userType
         );
         
         if (!duplicateCheck) {
@@ -274,14 +334,15 @@ const Message = () => {
   };
 
   // Function to handle starting conversation with user ID from URL or context
-  const handleStartConversationWithUserId = async (targetUserId) => {
+  const handleStartConversationWithUserId = async (targetUserId, userType = 'user') => {
     try {
-      console.log('Starting conversation with user ID:', targetUserId); // Debug log
+      console.log('Starting conversation with user ID:', targetUserId, 'Type:', userType); // Debug log
       console.log('Current conversations:', conversations); // Debug log
       
       // First check if conversation already exists
       const existingConversation = conversations.find(conv => 
-        conv.otherUser.id === parseInt(targetUserId)
+        conv.otherUser.id === parseInt(targetUserId) && 
+        conv.otherUser.userType === userType
       );
       
       if (existingConversation) {
@@ -292,13 +353,14 @@ const Message = () => {
 
       console.log('No existing conversation found, creating new one'); // Debug log
       // If no existing conversation, start a new one
-      const response = await startConversation(parseInt(targetUserId));
+      const response = await startConversation(parseInt(targetUserId), userType);
       if (response.data?.data) {
         console.log('Created new conversation:', response.data.data); // Debug log
         
-        // Check if this conversation already exists in our list (by other user ID)
+        // Check if this conversation already exists in our list (by other user ID and type)
         const duplicateCheck = conversations.find(conv => 
-          conv.otherUser.id === response.data.data.otherUser.id
+          conv.otherUser.id === response.data.data.otherUser.id &&
+          conv.otherUser.userType === response.data.data.otherUser.userType
         );
         
         if (!duplicateCheck) {
@@ -394,19 +456,32 @@ const Message = () => {
                   ) : (
                     searchResults.map((user) => (
                       <div
-                        key={user.id}
+                        key={`${user.id}-${user.userType || 'user'}`}
                         className="flex items-center p-3 cursor-pointer transition-all duration-200 hover:bg-blue-50/60"
                         onClick={() => handleStartConversation(user)}
                       >
-                        <div className="w-10 h-10 rounded-full overflow-hidden mr-2.5 ring-2 ring-white/50 shadow-md">
+                        <div className="w-10 h-10 rounded-full overflow-hidden mr-2.5 ring-2 ring-white/50 shadow-md relative">
                           <img 
                             src={getProfileImageUrl(user)} 
                             alt={user.name}
                             className="w-full h-full object-cover"
                           />
+                          {/* Employee indicator */}
+                          {user.userType === 'employee' && (
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">E</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-medium text-sm text-gray-900">{user.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-sm text-gray-900">{user.name}</h3>
+                            {user.userType === 'employee' && (
+                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                                Employee
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-600">{user.email}</p>
                         </div>
                         <Plus className="h-4 w-4 text-gray-400" />
@@ -423,42 +498,72 @@ const Message = () => {
               ) : (
                 conversations.map((conversation) => (
                   <div
-                    key={conversation.id}
-                    className={`flex items-center p-3 cursor-pointer transition-all duration-200 hover:bg-blue-50/60 ${
+                    key={`${conversation.id}-${conversation.otherUser.userType || 'user'}`}
+                    className={`flex items-center p-3 cursor-pointer transition-all duration-200 hover:bg-blue-50/60 relative ${
                       selectedConversation?.id === conversation.id
                         ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' 
                         : 'hover:shadow-sm'
                     }`}
                     onClick={() => handleConversationSelect(conversation)}
                   >
-                    <div className="w-10 h-10 rounded-full overflow-hidden mr-2.5 ring-2 ring-white/50 shadow-md">
+                    <div className="w-10 h-10 rounded-full overflow-hidden mr-2.5 ring-2 ring-white/50 shadow-md relative">
                       <img 
                         src={getProfileImageUrl(conversation.otherUser)} 
                         alt={conversation.otherUser.name}
                         className="w-full h-full object-cover"
                       />
+                      {/* Employee indicator */}
+                      {conversation.otherUser.userType === 'employee' && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">E</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-center">
-                        <h3 className={`font-medium text-sm ${
-                          selectedConversation?.id === conversation.id 
-                            ? 'text-white' 
-                            : 'text-gray-900'
-                        }`}>
-                          {conversation.otherUser.name}
-                        </h3>
-                        <span className={`text-xs ${
-                          selectedConversation?.id === conversation.id 
-                            ? 'text-blue-100' 
-                            : 'text-gray-500'
-                        }`}>
-                          {conversation.lastMessageTime && formatTime(conversation.lastMessageTime)}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <h3 className={`font-medium text-sm ${
+                            selectedConversation?.id === conversation.id 
+                              ? 'text-white' 
+                              : 'text-gray-900'
+                          }`}>
+                            {conversation.otherUser.name}
+                          </h3>
+                          {conversation.otherUser.userType === 'employee' && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                              selectedConversation?.id === conversation.id 
+                                ? 'bg-white/20 text-white' 
+                                : 'bg-green-100 text-green-700'
+                            }`}>
+                              Employee
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {conversation.unreadCount > 0 && (
+                            <div className={`min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-xs font-medium ${
+                              selectedConversation?.id === conversation.id
+                                ? 'bg-white/20 text-white'
+                                : 'bg-blue-500 text-white'
+                            }`}>
+                              {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+                            </div>
+                          )}
+                          <span className={`text-xs ${
+                            selectedConversation?.id === conversation.id 
+                              ? 'text-blue-100' 
+                              : 'text-gray-500'
+                          }`}>
+                            {conversation.lastMessageTime && formatTime(conversation.lastMessageTime)}
+                          </span>
+                        </div>
                       </div>
                       <p className={`text-xs truncate ${
                         selectedConversation?.id === conversation.id 
                           ? 'text-blue-100' 
-                          : 'text-gray-600'
+                          : conversation.unreadCount > 0 
+                            ? 'text-gray-900 font-medium' 
+                            : 'text-gray-600'
                       }`}>
                         {conversation.lastMessage?.content || 'Start a conversation'}
                       </p>

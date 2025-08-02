@@ -181,19 +181,13 @@ const dashboard = () => {
 
   const statsCards = [
     { 
-      title: 'Props Sale', 
+      title: 'No. of Props', 
       value: loading ? '...' : dashboardStats.propsSale.toString(), 
       subtitle: 'Total', 
       color: 'from-blue-500 to-purple-600', 
       icon: Building 
     },
-    { 
-      title: 'Props Rented', 
-      value: loading ? '...' : dashboardStats.propsRented.toString(), 
-      subtitle: 'Monthly Rent', 
-      color: 'from-orange-500 to-red-500', 
-      icon: Home 
-    },
+    
     { 
       title: 'Total Rooms', 
       value: loading ? '...' : dashboardStats.totalRooms.toString(), 
@@ -228,15 +222,15 @@ const dashboard = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex">
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300`}>
+      <div className={`flex-1 transition-all duration-300 overflow-x-hidden`}>
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-6 my-6 mx-8 rounded-xl ">
+        <header className="bg-white shadow-sm border-b border-gray-100 px-8 py-4 mx-8 mt-6 rounded-xl">
           <div className="flex items-center justify-between px-5">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-2xl font-bold text-gray-800">
                 Welcome{currentUser ? `, ${currentUser.name}` : ''}
               </h1>
-              <p className="text-gray-500 mt-1">Here's what's happening with your properties</p>
+              <p className="text-gray-500 mt-1 text-sm">Here's what's happening with your properties</p>
             </div>
             <div className="flex items-center space-x-4">
               <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
@@ -254,14 +248,14 @@ const dashboard = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="mx-8 mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="mx-8 mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             <p>{error}</p>
           </div>
         )}
 
-        <div className="px-8 py-4 overflow-y-auto">
+        <div className="px-8 py-4">
           {/* Stats Cards */}
-          <div className="flex gap-6 mb-8 overflow-x-auto">
+          <div className="flex gap-6 mb-6 overflow-x-auto">
             {statsCards.map((card, index) => {
               const Icon = card.icon;
               return (

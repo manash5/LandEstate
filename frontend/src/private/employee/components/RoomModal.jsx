@@ -165,7 +165,20 @@ const RoomsModal = ({ property, onClose, setSelectedRoom }) => {
                   </label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                    onChange={(e) => {
+                      const newStatus = e.target.value;
+                      setFormData({
+                        ...formData, 
+                        status: newStatus,
+                        // Clear tenant fields when changing to vacant
+                        ...(newStatus === 'vacant' && {
+                          tenant: '',
+                          tenantContact: '',
+                          rent: '',
+                          rentDueDate: ''
+                        })
+                      });
+                    }}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="vacant">Vacant</option>

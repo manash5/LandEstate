@@ -1,4 +1,4 @@
-import { Employee } from '../../models/index.js';
+import { Employee, User } from '../../models/index.js';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../../security/jwt-util.js';
 
@@ -16,12 +16,18 @@ const employeeLogin = async (req, res) => {
             });
         }
 
-        // Find employee by email
+        // Find employee by email with manager information
         const employee = await Employee.findOne({
             where: { 
                 email: email.toLowerCase(),
                 isActive: true 
-            }
+            },
+            include: [{
+                model: User,
+                as: 'manager',
+                attributes: ['id', 'name', 'email'],
+                required: false
+            }]
         });
 
         if (!employee) {

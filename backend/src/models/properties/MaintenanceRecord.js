@@ -47,6 +47,15 @@ export const MaintenanceRecord = sequelize.define("MaintenanceRecord", {
             key: 'id'
         }
     },
+    roomId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: 'room_id',
+        references: {
+            model: 'rooms',
+            key: 'id'
+        }
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
