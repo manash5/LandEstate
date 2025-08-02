@@ -124,7 +124,7 @@ const getEmployees = async (req, res) => {
 const updateEmployee = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, phone, isActive } = req.body;
+        const { name, email, phone, isActive, password } = req.body;
         const managerId = req.user.id;
 
         // Find employee belonging to current manager
@@ -150,6 +150,17 @@ const updateEmployee = async (req, res) => {
             });
         }
 
+        // Validate password if provided
+        if (password) {
+            const passwordValidation = validatePasswordStrength(password);
+            if (!passwordValidation.isValid) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: `Password validation failed: ${passwordValidation.errors.join(', ')}` 
+                });
+            }
+        }
+
         // Check if email already exists (exclude current employee)
         if (email && email !== employee.email) {
             const existingEmployee = await Employee.findOne({ 
@@ -173,6 +184,7 @@ const updateEmployee = async (req, res) => {
         if (email) updateData.email = email.toLowerCase();
         if (phone !== undefined) updateData.phone = phone;
         if (isActive !== undefined) updateData.isActive = isActive;
+        if (password) updateData.password = password; // Password will be hashed by the model hook
 
         await employee.update(updateData);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, DollarSign, Calendar, MapPin, AlertTriangle, CheckCircle, Search, Loader } from 'lucide-react';
-import { getEmployeeDashboard } from '../../../services/api';
+import { User, Phone, DollarSign, Calendar, MapPin, AlertTriangle, CheckCircle, Search, Loader, Edit2, Trash2, X, Save } from 'lucide-react';
+import { getEmployeeDashboard, updateRoom } from '../../../services/api';
+import { toast } from 'react-toastify';
 
 export default function TenantsOverview() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -8,6 +9,9 @@ export default function TenantsOverview() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingTenant, setEditingTenant] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchPropertiesData();
@@ -20,14 +24,127 @@ export default function TenantsOverview() {
       
       if (response.data.success) {
         setProperties(response.data.data.properties || []);
+        setError(null); // Clear any previous errors
       } else {
         setError('Failed to fetch properties data');
+        toast.error('Failed to fetch properties data', {
+          theme: 'dark',
+          position: 'top-right'
+        });
       }
     } catch (error) {
       console.error('Error fetching properties data:', error);
       setError('Failed to load properties data. Please try again.');
+      toast.error('Failed to load properties data. Please try again.', {
+        theme: 'dark',
+        position: 'top-right'
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditTenant = (tenant) => {
+    setEditingTenant(tenant.id);
+    setEditForm({
+      tenant: tenant.name,
+      tenantContact: tenant.contact || '',
+      rent: tenant.rent || '',
+      rentDueDate: tenant.rentDueDate ? tenant.rentDueDate.split('T')[0] : '',
+      status: tenant.status
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTenant(null);
+    setEditForm({});
+  };
+
+  const handleSaveEdit = async (tenant) => {
+    try {
+      setActionLoading(true);
+      
+      // Validate required fields
+      if (!editForm.tenant || editForm.tenant.trim() === '') {
+        toast.error('Tenant name is required!', {
+          theme: 'dark',
+          position: 'top-right'
+        });
+        return;
+      }
+      
+      // Prepare the room data with proper field mapping
+      const roomData = {
+        number: tenant.roomNumber, // Keep the existing room number
+        tenant: editForm.tenant.trim(),
+        tenantContact: editForm.tenantContact.trim(),
+        rent: parseFloat(editForm.rent) || 0,
+        rentDueDate: editForm.rentDueDate ? new Date(editForm.rentDueDate).toISOString() : null,
+        status: editForm.status
+      };
+
+      console.log('Updating room with data:', roomData); // Debug log
+
+      await updateRoom(tenant.roomId, roomData);
+      
+      // Refresh the data
+      await fetchPropertiesData();
+      
+      setEditingTenant(null);
+      setEditForm({});
+      
+      // Show success message
+      toast.success('Tenant information updated successfully!', {
+        theme: 'dark',
+        position: 'top-right'
+      });
+    } catch (error) {
+      console.error('Error updating tenant:', error);
+      toast.error('Failed to update tenant. Please try again.', {
+        theme: 'dark',
+        position: 'top-right'
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRemoveTenant = async (tenant) => {
+    if (!window.confirm(`Are you sure you want to remove ${tenant.name} from Room ${tenant.roomNumber}?`)) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      
+      // Clear tenant data and set room as vacant
+      const roomData = {
+        number: tenant.roomNumber,
+        tenant: '',
+        tenantContact: '',
+        rent: tenant.rent, // Keep the rent amount for future tenants
+        rentDueDate: '',
+        status: 'vacant'
+      };
+
+      await updateRoom(tenant.roomId, roomData);
+      
+      // Refresh the data
+      await fetchPropertiesData();
+      
+      // Show success message
+      toast.success(`${tenant.name} has been removed successfully!`, {
+        theme: 'dark',
+        position: 'top-right'
+      });
+    } catch (error) {
+      console.error('Error removing tenant:', error);
+      toast.error('Failed to remove tenant. Please try again.', {
+        theme: 'dark',
+        position: 'top-right'
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -195,7 +312,6 @@ export default function TenantsOverview() {
 
           <div className="bg-purple-50 rounded-lg p-4">
             <div className="flex items-center">
-              <DollarSign className="w-5 h-5 text-purple-600 mr-2" />
               <div>
                 <p className="text-sm text-purple-600 font-medium">Total Rent</p>
                 <p className="text-2xl font-bold text-purple-700">₹ {totalRent.toLocaleString()}</p>
@@ -255,11 +371,15 @@ export default function TenantsOverview() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredTenants.map((tenant) => (
                   <tr key={tenant.id} className="hover:bg-gray-50 transition-colors">
+                    {/* Tenant Name */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -268,11 +388,23 @@ export default function TenantsOverview() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{tenant.name}</div>
+                          {editingTenant === tenant.id ? (
+                            <input
+                              type="text"
+                              value={editForm.tenant || ''}
+                              onChange={(e) => setEditForm({...editForm, tenant: e.target.value})}
+                              className="text-sm font-medium text-gray-900 border border-blue-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-40"
+                              placeholder="Enter tenant name"
+                              required
+                            />
+                          ) : (
+                            <div className="text-sm font-medium text-gray-900">{tenant.name}</div>
+                          )}
                         </div>
                       </div>
                     </td>
                     
+                    {/* Property & Room */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{tenant.propertyName}</div>
                       <div className="text-sm text-gray-500 flex items-center">
@@ -282,28 +414,117 @@ export default function TenantsOverview() {
                       <div className="text-xs text-gray-400">{tenant.propertyLocation}</div>
                     </td>
                     
+                    {/* Contact */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 flex items-center">
-                        <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                        {tenant.contact || 'Not provided'}
+                        <Phone className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                        {editingTenant === tenant.id ? (
+                          <input
+                            type="tel"
+                            value={editForm.tenantContact || ''}
+                            onChange={(e) => setEditForm({...editForm, tenantContact: e.target.value})}
+                            className="border border-blue-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full max-w-32"
+                            placeholder="Phone number"
+                          />
+                        ) : (
+                          tenant.contact || 'Not provided'
+                        )}
                       </div>
                     </td>
                     
+                    {/* Rent */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatRent(tenant.rent)}
+                        {editingTenant === tenant.id ? (
+                          <input
+                            type="number"
+                            value={editForm.rent || ''}
+                            onChange={(e) => setEditForm({...editForm, rent: e.target.value})}
+                            className="border border-blue-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-28"
+                            placeholder="Amount"
+                            min="0"
+                            step="0.01"
+                          />
+                        ) : (
+                          formatRent(tenant.rent)
+                        )}
                       </div>
                     </td>
                     
+                    {/* Due Date */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 flex items-center">
-                        <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                        {formatDate(tenant.rentDueDate)}
+                        <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                        {editingTenant === tenant.id ? (
+                          <input
+                            type="date"
+                            value={editForm.rentDueDate || ''}
+                            onChange={(e) => setEditForm({...editForm, rentDueDate: e.target.value})}
+                            className="border border-blue-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        ) : (
+                          formatDate(tenant.rentDueDate)
+                        )}
                       </div>
                     </td>
                     
+                    {/* Status */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(tenant.status)}
+                      {editingTenant === tenant.id ? (
+                        <select
+                          value={editForm.status || 'unpaid'}
+                          onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                          className="border border-blue-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="paid">Paid</option>
+                          <option value="unpaid">Unpaid</option>
+                        </select>
+                      ) : (
+                        getStatusBadge(tenant.status)
+                      )}
+                    </td>
+                    
+                    {/* Actions */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {editingTenant === tenant.id ? (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleSaveEdit(tenant)}
+                            disabled={actionLoading}
+                            className="text-green-600 hover:text-green-900 transition-colors disabled:opacity-50 p-1 rounded hover:bg-green-50"
+                            title="Save changes"
+                          >
+                            <Save className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            disabled={actionLoading}
+                            className="text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50 p-1 rounded hover:bg-gray-50"
+                            title="Cancel editing"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEditTenant(tenant)}
+                            disabled={actionLoading}
+                            className="text-blue-600 hover:text-blue-900 transition-colors disabled:opacity-50 p-1 rounded hover:bg-blue-50"
+                            title="Edit tenant information"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveTenant(tenant)}
+                            disabled={actionLoading}
+                            className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50 p-1 rounded hover:bg-red-50"
+                            title="Remove tenant"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

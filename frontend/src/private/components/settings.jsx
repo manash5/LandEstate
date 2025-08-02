@@ -32,7 +32,9 @@ const settings = () => {
     name: '',
     email: '',
     password: '',
-    phone: ''
+    phone: '',
+    hireDate: '',
+    isActive: true
   });
   const [formData, setFormData] = useState({
     firstName: '',
@@ -128,7 +130,9 @@ const settings = () => {
           name: '',
           email: '',
           password: '',
-          phone: ''
+          phone: '',
+          hireDate: '',
+          isActive: true
         });
         fetchEmployees();
       }
@@ -148,7 +152,9 @@ const settings = () => {
       name: employee.name,
       email: employee.email,
       password: '',
-      phone: employee.phone || ''
+      phone: employee.phone || '',
+      hireDate: employee.hireDate || (employee.created_at ? new Date(employee.created_at).toISOString().split('T')[0] : ''),
+      isActive: employee.isActive !== undefined ? employee.isActive : true
     });
     setShowEmployeeModal(true);
   };
@@ -173,7 +179,9 @@ const settings = () => {
           name: '',
           email: '',
           password: '',
-          phone: ''
+          phone: '',
+          hireDate: '',
+          isActive: true
         });
         fetchEmployees();
       }
@@ -535,21 +543,20 @@ const settings = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              {!editingEmployee && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={employeeFormData.password}
-                    onChange={(e) => setEmployeeFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password {editingEmployee && <span className="text-gray-500 text-xs">(leave blank to keep current password)</span>}
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={employeeFormData.password}
+                  onChange={(e) => setEmployeeFormData(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required={!editingEmployee}
+                  placeholder={editingEmployee ? "Enter new password (optional)" : "Enter password"}
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Hire Date

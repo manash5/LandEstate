@@ -3,7 +3,6 @@ import Dashboard from '../components/Dashboard';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import MyProperties from '../components/MyProperties';
-import ServiceRecords from '../components/ServiceRecords';
 import Issues from '../components/Issues';
 import TenantsOverview from '../components/TenantsOverviewComponent';
 import Settings from '../components/Settings';
@@ -24,8 +23,6 @@ const Layout = () => {
         return <MyProperties />;
       case 'Issues Raised':
         return <Issues />;
-      case 'Service Records':
-        return <ServiceRecords />;
       case 'Messages':
         return <Messages />;
       case 'Tenants Overview':
