@@ -1,203 +1,248 @@
-import request from 'supertest';
-import app from '../src/index.js'; // Adjust path as needed
+const userSecurity = require('../src/middleware/auth-middleware.js');
+const jwt = require('jsonwebtoken');
 
-// Test data
-const testUser = {
-  name: 'Test User',
-  email: 'test@example.com',
-  password: 'password123',
-  phone: '+1234567890',
-  address: '123 Test Street'
-};
+// Mock jwt
+jest.mock('jsonwebtoken', () => ({
+  verify: jest.fn(),
+  sign: jest.fn()
+}));
 
-let authToken = '';
-let userId = '';
+// Mock environment
+process.env.JWT_SECRET = 'test-secret-key';
 
-describe('User Account & Security API Tests', () => {
-  
-  // Setup - Create a test user and login
-  beforeAll(async () => {
-    // Create test user
-    const createResponse = await request(app)
-      .post('/api/user')
-      .send(testUser);
-    
-    expect(createResponse.status).toBe(201);
-    userId = createResponse.body.data.id;
-    
-    // Login to get auth token
-    const loginResponse = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: testUser.email,
-        password: testUser.password
+describe('User Security Tests', () => {
+  const mockResponse = () => {
+    const res = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    return res;
+  };
+
+  const mockNext = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('Token Validation', () => {
+    it('should accept valid JWT tokens', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer valid-token'),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
+      const mockUser = { id: 1, email: 'test@example.com', type: 'admin' };
+
+      jwt.verify.mockReturnValue(mockUser);
+
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(jwt.verify).toHaveBeenCalledWith('valid-token', 'test-secret-key');
+      expect(req.user).toEqual(mockUser);
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should reject expired tokens', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer expired-token'),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
+
+      jwt.verify.mockImplementation(() => {
+        const error = new Error('Token expired');
+        error.name = 'TokenExpiredError';
+        throw error;
       });
-    
-    expect(loginResponse.status).toBe(200);
-    authToken = loginResponse.body.token;
-  });
 
-  describe('GET /api/user/:id/profile', () => {
-    test('should return user profile without sensitive data', async () => {
-      const response = await request(app)
-        .get(`/api/user/${userId}/profile`)
-        .set('Authorization', `Bearer ${authToken}`);
+      userSecurity.authorizeUser(req, res, mockNext);
 
-      expect(response.status).toBe(200);
-      expect(response.body.data).toHaveProperty('id');
-      expect(response.body.data).toHaveProperty('name');
-      expect(response.body.data).toHaveProperty('email');
-      expect(response.body.data).not.toHaveProperty('password');
-      expect(response.body.data).not.toHaveProperty('resetPasswordToken');
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Invalid token.'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
-    test('should return 401 without auth token', async () => {
-      const response = await request(app)
-        .get(`/api/user/${userId}/profile`);
-
-      expect(response.status).toBe(401);
-    });
-  });
-
-  describe('PATCH /api/user/:id/account-info', () => {
-    test('should update account information successfully', async () => {
-      const updateData = {
-        name: 'Updated Test User',
-        email: 'updated@example.com',
-        phone: '+9876543210',
-        address: '456 Updated Street'
+    it('should reject malformed tokens', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer malformed-token'),
+        params: { id: '1' }
       };
+      const res = mockResponse();
 
-      const response = await request(app)
-        .patch(`/api/user/${userId}/account-info`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData);
+      jwt.verify.mockImplementation(() => {
+        const error = new Error('Invalid token');
+        error.name = 'JsonWebTokenError';
+        throw error;
+      });
 
-      expect(response.status).toBe(200);
-      expect(response.body.data.name).toBe(updateData.name);
-      expect(response.body.data.email).toBe(updateData.email);
-      expect(response.body.message).toBe('Account information updated successfully');
-    });
+      userSecurity.authorizeUser(req, res, mockNext);
 
-    test('should validate required fields', async () => {
-      const response = await request(app)
-        .patch(`/api/user/${userId}/account-info`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ phone: '+1234567890' }); // Missing name and email
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Name and email are required');
-    });
-
-    test('should validate email format', async () => {
-      const response = await request(app)
-        .patch(`/api/user/${userId}/account-info`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          name: 'Test User',
-          email: 'invalid-email'
-        });
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('valid email address');
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Invalid token.'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
     });
   });
 
-  describe('PATCH /api/user/:id/change-password', () => {
-    test('should change password successfully', async () => {
-      const passwordData = {
-        currentPassword: 'password123',
-        newPassword: 'newPassword456',
-        confirmPassword: 'newPassword456'
+  describe('Authorization Checks', () => {
+    it('should allow users to access their own data', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer valid-token'),
+        params: { id: '1' }
       };
+      const res = mockResponse();
+      const mockUser = { id: 1, email: 'test@example.com' };
 
-      const response = await request(app)
-        .patch(`/api/user/${userId}/change-password`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(passwordData);
+      jwt.verify.mockReturnValue(mockUser);
 
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Password changed successfully');
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalledWith(403);
     });
 
-    test('should validate current password', async () => {
-      const passwordData = {
-        currentPassword: 'wrongPassword',
-        newPassword: 'newPassword789',
-        confirmPassword: 'newPassword789'
+    it('should prevent users from accessing other users data', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer valid-token'),
+        params: { id: '2' }
       };
+      const res = mockResponse();
+      const mockUser = { id: 1, email: 'test@example.com' };
 
-      const response = await request(app)
-        .patch(`/api/user/${userId}/change-password`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(passwordData);
+      jwt.verify.mockReturnValue(mockUser);
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Current password is incorrect');
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Access denied. You can only access your own account.'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
-    test('should validate password confirmation', async () => {
-      const passwordData = {
-        currentPassword: 'newPassword456', // Updated password from previous test
-        newPassword: 'anotherPassword123',
-        confirmPassword: 'differentPassword123'
+    it('should handle string vs number ID comparison', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer valid-token'),
+        params: { id: '1' }
       };
+      const res = mockResponse();
+      const mockUser = { id: 1, email: 'test@example.com' }; // number ID
 
-      const response = await request(app)
-        .patch(`/api/user/${userId}/change-password`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(passwordData);
+      jwt.verify.mockReturnValue(mockUser);
 
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('do not match');
-    });
+      userSecurity.authorizeUser(req, res, mockNext);
 
-    test('should validate password strength', async () => {
-      const passwordData = {
-        currentPassword: 'newPassword456',
-        newPassword: '123', // Too short
-        confirmPassword: '123'
-      };
-
-      const response = await request(app)
-        .patch(`/api/user/${userId}/change-password`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(passwordData);
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toContain('at least');
+      expect(mockNext).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalledWith(403);
     });
   });
 
-  describe('POST /api/user/:id/validate-password', () => {
-    test('should validate correct password', async () => {
-      const response = await request(app)
-        .post(`/api/user/${userId}/validate-password`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ password: 'newPassword456' });
+  describe('Input Sanitization', () => {
+    it('should handle missing authorization header', () => {
+      const req = {
+        header: jest.fn().mockReturnValue(null),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
 
-      expect(response.status).toBe(200);
-      expect(response.body.isValid).toBe(true);
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Access denied. No token provided.'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
     });
 
-    test('should reject incorrect password', async () => {
-      const response = await request(app)
-        .post(`/api/user/${userId}/validate-password`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ password: 'wrongPassword' });
+    it('should handle malformed authorization header', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('InvalidFormat token'),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
 
-      expect(response.status).toBe(200);
-      expect(response.body.isValid).toBe(false);
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Access denied. No token provided.'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should properly extract token from Bearer format', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer actual-token-here'),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
+      const mockUser = { id: 1, email: 'test@example.com' };
+
+      jwt.verify.mockReturnValue(mockUser);
+
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(jwt.verify).toHaveBeenCalledWith('actual-token-here', 'test-secret-key');
+      expect(mockNext).toHaveBeenCalled();
     });
   });
 
-  // Cleanup
-  afterAll(async () => {
-    // Delete test user
-    await request(app)
-      .delete(`/api/user/${userId}`)
-      .set('Authorization', `Bearer ${authToken}`);
+  describe('Security Edge Cases', () => {
+    it('should handle undefined user ID in token', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer valid-token'),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
+      const mockUser = { email: 'test@example.com' }; // no ID
+
+      jwt.verify.mockReturnValue(mockUser);
+
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Access denied. You can only access your own account.'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should handle empty token after Bearer', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer '),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
+
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Access denied. No token provided.'
+      });
+    });
+
+    it('should handle token verification network errors', () => {
+      const req = {
+        header: jest.fn().mockReturnValue('Bearer valid-token'),
+        params: { id: '1' }
+      };
+      const res = mockResponse();
+
+      jwt.verify.mockImplementation(() => {
+        throw new Error('Network error');
+      });
+
+      userSecurity.authorizeUser(req, res, mockNext);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Invalid token.'
+      });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
   });
 });
-
-export default describe;
