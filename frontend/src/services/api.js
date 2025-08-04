@@ -26,13 +26,33 @@ userAxios.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// User response interceptor - redirect on 401/403
+// User response interceptor - redirect on 401/403 for specific endpoints
 userAxios.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log the error for debugging
+    console.log('Axios interceptor caught error:', error.response?.status, error.config?.url);
+    
     if (error.response?.status === 401 || error.response?.status === 403) {
-      localStorage.removeItem('token');
-      window.location.href = '/'; // Redirect to homepage
+      const url = error.config?.url || '';
+      
+      // Don't redirect for specific API calls - let the component handle the error
+      const nonRedirectUrls = [
+        '/profile-image',
+        '/account-info',
+        '/change-password',
+        '/validate-password'
+      ];
+      
+      const shouldNotRedirect = nonRedirectUrls.some(endpoint => url.includes(endpoint));
+      
+      if (!shouldNotRedirect) {
+        console.log('Redirecting due to auth error for URL:', url);
+        localStorage.removeItem('token');
+        window.location.href = '/'; // Redirect to homepage
+      } else {
+        console.log('Not redirecting for URL:', url, '- letting component handle error');
+      }
     }
     return Promise.reject(error);
   }

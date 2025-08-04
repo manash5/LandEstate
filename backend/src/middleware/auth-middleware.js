@@ -16,7 +16,7 @@ export function authorizeUser(req, res, next) {
             return res.status(401).json({ message: 'Access denied. No token provided.' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        const decoded = jwt.verify(token, process.env.secretkey);
         
         // Check if the user is trying to access/modify their own data
         if (decoded.id.toString() !== id.toString()) {
@@ -46,7 +46,7 @@ export function authorizeAdmin(req, res, next) {
             return res.status(401).json({ message: 'Access denied. No token provided.' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        const decoded = jwt.verify(token, process.env.secretkey);
         
         // Check if user has admin role (you'll need to add role field to User model)
         if (decoded.role !== 'admin') {

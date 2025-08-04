@@ -97,6 +97,8 @@ const Profile = () => {
     try {
       setImageLoading(true);
       
+      console.log('Uploading profile image for user ID:', user.id);
+      
       // Upload image to backend
       const response = await updateProfileImage(user.id, file);
       
@@ -125,16 +127,44 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error uploading profile image:', error);
-      toast.error('Failed to update profile image. Please try again.', {
-        position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "dark",
-        transition: Bounce,
-      });
+      console.error('Error details:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      // Check if it's an authentication/authorization error
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.', {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+          transition: Bounce,
+        });
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to update this profile image.', {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+          transition: Bounce,
+        });
+      } else {
+        toast.error('Failed to update profile image. Please try again.', {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "dark",
+          transition: Bounce,
+        });
+      }
     } finally {
       setImageLoading(false);
     }
@@ -173,6 +203,8 @@ const Profile = () => {
 
         // Debug: Log the user data to see what fields are available
         console.log('Full user data:', currentUser);
+        console.log('User ID:', currentUser.id);
+        console.log('User ID type:', typeof currentUser.id);
         console.log('Created at field:', currentUser.created_at);
         console.log('Created at type:', typeof currentUser.created_at);
         console.log('All user keys:', Object.keys(currentUser));
